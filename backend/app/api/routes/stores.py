@@ -170,6 +170,14 @@ def etsy_oauth_callback(
     store.token_scope = OAUTH_SCOPES
     db.flush()
 
+    # Kick off the first listing sync; connection succeeds even if queuing fails
+    from app.tasks.sync import sync_store_listings
+
+    try:
+        sync_store_listings.delay(str(store.id))
+    except Exception:
+        pass
+
     return RedirectResponse(
         f"{settings.FRONTEND_URL}/dashboard/stores"
         f"?connected=true&shop_name={quote(shop['shop_name'])}"

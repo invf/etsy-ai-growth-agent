@@ -52,6 +52,41 @@ def exchange_oauth_code(code: str, code_verifier: str) -> dict:
     return resp.json()
 
 
+def refresh_access_token(refresh_token: str) -> dict:
+    """Refresh an expired access token.
+
+    Returns {access_token, refresh_token, token_type, expires_in}.
+    """
+    resp = httpx.post(
+        ETSY_OAUTH_TOKEN_URL,
+        json={
+            "grant_type": "refresh_token",
+            "client_id": settings.ETSY_CLIENT_ID,
+            "refresh_token": refresh_token,
+        },
+        timeout=10,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def get_shop_listings(
+    access_token: str, shop_id: str, limit: int = 100, offset: int = 0
+) -> dict:
+    """One page of active listings: {count, results: [...]}. Max limit is 100."""
+    resp = httpx.get(
+        f"{ETSY_API_BASE}/application/shops/{shop_id}/listings/active",
+        headers={
+            "x-api-key": settings.ETSY_CLIENT_ID,
+            "Authorization": f"Bearer {access_token}",
+        },
+        params={"limit": limit, "offset": offset, "includes": "Images"},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
 def fetch_current_shop(access_token: str) -> dict:
     """Fetch the shop belonging to the authenticated Etsy user."""
     resp = httpx.get(
