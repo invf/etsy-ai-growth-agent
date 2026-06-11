@@ -13,6 +13,7 @@ node_modules/
 .next/
 out/
 .pnpm-store/
+*.tsbuildinfo
 
 # Env / secrets
 .env

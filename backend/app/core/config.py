@@ -29,4 +29,4 @@ class Settings(BaseSettings):
     JWT_EXPIRE_HOURS: int = 24
 
 
-settings = Settings()
+settings = Settings()  # type: ignore[call-arg]  # required fields come from .env
