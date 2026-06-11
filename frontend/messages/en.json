@@ -1,0 +1,66 @@
+{
+  "common": {
+    "appName": "Etsy AI Growth Agent",
+    "loading": "Loading...",
+    "error": "Something went wrong. Please try again."
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "uk": "Українська",
+    "pl": "Polski"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "register": "Create account"
+  },
+  "home": {
+    "title": "Grow your Etsy shop with AI",
+    "subtitle": "Your AI agent analyzes listings, optimizes SEO, and finds growth opportunities — every day, automatically.",
+    "getStarted": "Get started free",
+    "signIn": "Sign in"
+  },
+  "auth": {
+    "login": {
+      "title": "Welcome back",
+      "subtitle": "Sign in to your account",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "invalidCredentials": "Invalid email or password",
+      "noAccount": "Don't have an account?",
+      "registerLink": "Create one"
+    },
+    "register": {
+      "title": "Create your account",
+      "subtitle": "Start your 14-day free trial — no credit card required",
+      "name": "Name",
+      "email": "Email",
+      "password": "Password",
+      "passwordHint": "At least 8 characters, one uppercase letter and one digit",
+      "submit": "Create account",
+      "submitting": "Creating account...",
+      "emailExists": "This email is already registered",
+      "haveAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome, {name}!",
+    "subtitle": "Your store overview will appear here.",
+    "connectStore": {
+      "title": "Connect your Etsy store",
+      "description": "Connect your store to start getting AI-powered recommendations.",
+      "button": "Connect Etsy Store"
+    },
+    "stats": {
+      "credits": "Credits",
+      "plan": "Plan",
+      "trialEnds": "Trial ends"
+    }
+  }
+}

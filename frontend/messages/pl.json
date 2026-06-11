@@ -1,0 +1,66 @@
+{
+  "common": {
+    "appName": "Etsy AI Growth Agent",
+    "loading": "Ładowanie...",
+    "error": "Coś poszło nie tak. Spróbuj ponownie."
+  },
+  "language": {
+    "label": "Język",
+    "en": "English",
+    "uk": "Українська",
+    "pl": "Polski"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "signIn": "Zaloguj się",
+    "signOut": "Wyloguj się",
+    "register": "Utwórz konto"
+  },
+  "home": {
+    "title": "Rozwijaj swój sklep Etsy dzięki AI",
+    "subtitle": "Twój agent AI analizuje oferty, optymalizuje SEO i znajduje możliwości rozwoju — codziennie, automatycznie.",
+    "getStarted": "Zacznij za darmo",
+    "signIn": "Zaloguj się"
+  },
+  "auth": {
+    "login": {
+      "title": "Witaj ponownie",
+      "subtitle": "Zaloguj się na swoje konto",
+      "email": "E-mail",
+      "password": "Hasło",
+      "submit": "Zaloguj się",
+      "submitting": "Logowanie...",
+      "invalidCredentials": "Nieprawidłowy e-mail lub hasło",
+      "noAccount": "Nie masz konta?",
+      "registerLink": "Utwórz konto"
+    },
+    "register": {
+      "title": "Utwórz swoje konto",
+      "subtitle": "Rozpocznij 14-dniowy darmowy okres próbny — bez karty kredytowej",
+      "name": "Imię",
+      "email": "E-mail",
+      "password": "Hasło",
+      "passwordHint": "Co najmniej 8 znaków, jedna wielka litera i jedna cyfra",
+      "submit": "Utwórz konto",
+      "submitting": "Tworzenie konta...",
+      "emailExists": "Ten e-mail jest już zarejestrowany",
+      "haveAccount": "Masz już konto?",
+      "loginLink": "Zaloguj się"
+    }
+  },
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Witaj, {name}!",
+    "subtitle": "Tutaj pojawi się przegląd Twojego sklepu.",
+    "connectStore": {
+      "title": "Połącz swój sklep Etsy",
+      "description": "Połącz sklep, aby otrzymywać rekomendacje oparte na AI.",
+      "button": "Połącz sklep Etsy"
+    },
+    "stats": {
+      "credits": "Kredyty",
+      "plan": "Plan",
+      "trialEnds": "Okres próbny do"
+    }
+  }
+}
