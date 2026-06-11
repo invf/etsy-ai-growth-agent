@@ -1,17 +1,28 @@
 import json
 import secrets
+import uuid
+from datetime import datetime, timedelta, timezone
+from typing import cast
+from urllib.parse import quote
 
 import redis
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
 from app.core.config import settings
+from app.core.encryption import encrypt
 from app.db.models.store import Store
 from app.db.models.user import User
 from app.db.session import get_db
 from app.schemas.store import OAuthInitiateOut, StoreOut
-from app.services.etsy_client import build_etsy_oauth_url
+from app.services.etsy_client import (
+    OAUTH_SCOPES,
+    build_etsy_oauth_url,
+    exchange_oauth_code,
+    fetch_current_shop,
+)
 
 router = APIRouter(prefix="/stores", tags=["stores"])
 
@@ -106,3 +117,60 @@ def initiate_etsy_oauth(
             oauth_url=oauth_url, state=state, expires_in=OAUTH_STATE_TTL_SECONDS
         ).model_dump()
     }
+
+
+def _error_redirect(code: str) -> RedirectResponse:
+    return RedirectResponse(f"{settings.FRONTEND_URL}/dashboard/stores?error={code}")
+
+
+@router.get("/connect/callback")
+def etsy_oauth_callback(
+    code: str,
+    state: str,
+    db: Session = Depends(get_db),
+):
+    # CSRF check: state must match what /connect/initiate stored in Redis
+    r = get_redis()
+    cached = cast(str | None, r.get(f"oauth:state:{state}"))
+    if not cached:
+        return _error_redirect("OAUTH_STATE_MISMATCH")
+    state_data = json.loads(cached)
+    r.delete(f"oauth:state:{state}")
+    owner_id = uuid.UUID(state_data["user_id"])
+
+    try:
+        tokens = exchange_oauth_code(code, state_data["code_verifier"])
+        shop = fetch_current_shop(tokens["access_token"])
+    except Exception:
+        return _error_redirect("OAUTH_FAILED")
+
+    store = db.query(Store).filter_by(etsy_shop_id=str(shop["shop_id"])).first()
+    if not store:
+        store = Store(
+            user_id=owner_id,
+            etsy_shop_id=str(shop["shop_id"]),
+            shop_name=shop["shop_name"],
+            shop_url=shop.get("url"),
+            icon_url=(shop.get("icon") or {}).get("url_fullxfull"),
+            currency_code=shop.get("currency_code") or "USD",
+            listing_count=shop.get("listing_active_count") or 0,
+        )
+        db.add(store)
+    else:
+        # Reconnect: same shop may be re-linked (e.g. after token revocation)
+        store.user_id = owner_id
+        store.shop_name = shop["shop_name"]
+        store.status = "active"
+
+    store.etsy_access_token = encrypt(tokens["access_token"])
+    store.etsy_refresh_token = encrypt(tokens["refresh_token"])
+    store.token_expires_at = datetime.now(timezone.utc) + timedelta(
+        seconds=tokens["expires_in"]
+    )
+    store.token_scope = OAUTH_SCOPES
+    db.flush()
+
+    return RedirectResponse(
+        f"{settings.FRONTEND_URL}/dashboard/stores"
+        f"?connected=true&shop_name={quote(shop['shop_name'])}"
+    )
