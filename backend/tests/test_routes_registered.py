@@ -6,6 +6,8 @@ def test_store_routes_registered():
     assert "/v1/stores" in paths
     assert "/v1/stores/{store_id}" in paths
     assert "/v1/stores/connect/initiate" in paths
+    assert "/v1/stores/connect/callback" in paths
+    assert "/v1/stores/{store_id}/sync" in paths
 
 
 def test_store_routes_require_auth():
@@ -14,3 +16,4 @@ def test_store_routes_require_auth():
     client = TestClient(app)
     assert client.get("/v1/stores").status_code in (401, 403)
     assert client.post("/v1/stores/connect/initiate").status_code in (401, 403)
+    assert client.post("/v1/stores/some-id/sync").status_code in (401, 403)

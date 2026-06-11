@@ -5,12 +5,18 @@ from urllib.parse import urlencode
 import httpx
 
 from app.core.config import settings
+from app.services.rate_limiter import get_etsy_rate_limiter
 
 ETSY_OAUTH_CONNECT_URL = "https://www.etsy.com/oauth/connect"
 ETSY_OAUTH_TOKEN_URL = "https://api.etsy.com/v3/public/oauth/token"
 ETSY_API_BASE = "https://openapi.etsy.com/v3"
 
 OAUTH_SCOPES = "listings_r listings_w shops_r shops_w transactions_r"
+
+
+def _throttle() -> None:
+    """Take one token from the app-wide Etsy bucket (~10 req/s) before any call."""
+    get_etsy_rate_limiter().acquire()
 
 
 def compute_code_challenge(code_verifier: str) -> str:
@@ -37,6 +43,7 @@ def exchange_oauth_code(code: str, code_verifier: str) -> dict:
 
     Returns {access_token, refresh_token, token_type, expires_in}.
     """
+    _throttle()
     resp = httpx.post(
         ETSY_OAUTH_TOKEN_URL,
         json={
@@ -57,6 +64,7 @@ def refresh_access_token(refresh_token: str) -> dict:
 
     Returns {access_token, refresh_token, token_type, expires_in}.
     """
+    _throttle()
     resp = httpx.post(
         ETSY_OAUTH_TOKEN_URL,
         json={
@@ -74,6 +82,7 @@ def get_shop_listings(
     access_token: str, shop_id: str, limit: int = 100, offset: int = 0
 ) -> dict:
     """One page of active listings: {count, results: [...]}. Max limit is 100."""
+    _throttle()
     resp = httpx.get(
         f"{ETSY_API_BASE}/application/shops/{shop_id}/listings/active",
         headers={
@@ -89,6 +98,7 @@ def get_shop_listings(
 
 def fetch_current_shop(access_token: str) -> dict:
     """Fetch the shop belonging to the authenticated Etsy user."""
+    _throttle()
     resp = httpx.get(
         f"{ETSY_API_BASE}/application/users/me/shops",
         headers={

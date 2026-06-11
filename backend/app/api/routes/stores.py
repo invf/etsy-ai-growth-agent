@@ -82,6 +82,37 @@ def get_store(
     return {"data": _store_to_out(store).model_dump(mode="json")}
 
 
+@router.post("/{store_id}/sync", response_model=dict, status_code=202)
+def trigger_store_sync(
+    store_id: str,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    store = db.query(Store).filter_by(id=store_id, user_id=current_user.id).first()
+    if not store:
+        raise HTTPException(
+            404, detail={"code": "NOT_FOUND", "message": "Store not found"}
+        )
+    if store.sync_status == "syncing":
+        raise HTTPException(
+            409,
+            detail={"code": "SYNC_IN_PROGRESS", "message": "Sync already running"},
+        )
+    if not store.etsy_access_token:
+        raise HTTPException(
+            409,
+            detail={
+                "code": "STORE_NOT_CONNECTED",
+                "message": "Store has no Etsy tokens; reconnect via OAuth",
+            },
+        )
+
+    from app.tasks.sync import sync_store_listings
+
+    result = sync_store_listings.delay(str(store.id))
+    return {"data": {"job_id": result.id, "status": "queued"}}
+
+
 @router.post("/connect/initiate", response_model=dict)
 def initiate_etsy_oauth(
     current_user: User = Depends(get_current_user),
