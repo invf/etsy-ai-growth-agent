@@ -1,7 +1,21 @@
+from contextlib import contextmanager
 from decimal import Decimal
+from unittest.mock import MagicMock
+
+import httpx
+import pytest
 
 from app.db.models.listing import Listing
+from app.db.models.store import Store
+from app.services.etsy_token_service import StoreNotConnectedError
+from app.tasks import sync as sync_mod
 from app.tasks.sync import _apply_etsy_listing, _money_to_decimal, compute_content_hash
+
+
+def _http_error(status: int) -> httpx.HTTPStatusError:
+    request = httpx.Request("GET", "https://openapi.etsy.com/v3/test")
+    response = httpx.Response(status, request=request)
+    return httpx.HTTPStatusError("boom", request=request, response=response)
 
 
 def test_content_hash_changes_with_content():
@@ -69,3 +83,62 @@ def test_apply_etsy_listing_non_usd_price_not_normalized():
     assert listing.original_price == Decimal("50.00")
     assert listing.currency_code == "PLN"
     assert listing.price_usd is None
+
+
+def test_fetch_page_force_refreshes_on_401(monkeypatch):
+    used_tokens = []
+
+    def fake_get_shop_listings(token, shop_id, limit, offset):
+        used_tokens.append(token)
+        if token == "stale":
+            raise _http_error(401)
+        return {"count": 0, "results": []}
+
+    monkeypatch.setattr(sync_mod, "get_shop_listings", fake_get_shop_listings)
+    monkeypatch.setattr(
+        sync_mod, "get_valid_access_token", MagicMock(return_value="fresh")
+    )
+
+    store = Store(etsy_shop_id="s1", shop_name="Shop")
+    page, token = sync_mod._fetch_page(MagicMock(), store, "stale", offset=0)
+
+    assert token == "fresh"
+    assert used_tokens == ["stale", "fresh"]
+    assert page == {"count": 0, "results": []}
+
+
+def test_fetch_page_non_401_error_bubbles_up(monkeypatch):
+    monkeypatch.setattr(
+        sync_mod, "get_shop_listings", MagicMock(side_effect=_http_error(500))
+    )
+    refresh = MagicMock()
+    monkeypatch.setattr(sync_mod, "get_valid_access_token", refresh)
+
+    store = Store(etsy_shop_id="s1", shop_name="Shop")
+    with pytest.raises(httpx.HTTPStatusError):
+        sync_mod._fetch_page(MagicMock(), store, "tok", offset=0)
+    refresh.assert_not_called()
+
+
+def test_sync_marks_store_disconnected_on_revoked_token(monkeypatch):
+    store = Store(etsy_shop_id="s1", shop_name="Shop", status="active", sync_status="idle")
+    db = MagicMock()
+    db.query.return_value.filter_by.return_value.first.return_value = store
+
+    @contextmanager
+    def fake_session():
+        yield db
+
+    monkeypatch.setattr(sync_mod, "get_db_session", fake_session)
+    monkeypatch.setattr(
+        sync_mod,
+        "get_valid_access_token",
+        MagicMock(side_effect=StoreNotConnectedError("revoked")),
+    )
+
+    result = sync_mod.sync_store_listings("some-id")
+
+    assert result == {"status": "error", "reason": "store_disconnected"}
+    assert store.status == "disconnected"
+    assert store.sync_status == "error"
+    assert "revoked" in store.sync_error

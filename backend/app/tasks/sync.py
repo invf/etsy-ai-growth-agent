@@ -2,12 +2,18 @@ import hashlib
 from datetime import datetime, timezone
 from decimal import Decimal
 
+import httpx
+from sqlalchemy.orm import Session
+
 from app.celery_app import celery_app
 from app.db.models.listing import Listing
 from app.db.models.store import Store
 from app.db.session import get_db_session
 from app.services.etsy_client import get_shop_listings
-from app.services.etsy_token_service import get_valid_access_token
+from app.services.etsy_token_service import (
+    StoreNotConnectedError,
+    get_valid_access_token,
+)
 
 PAGE_SIZE = 100
 
@@ -65,6 +71,22 @@ def _apply_etsy_listing(listing: Listing, item: dict) -> None:
     listing.synced_at = datetime.now(timezone.utc)
 
 
+def _fetch_page(db: Session, store: Store, token: str, offset: int) -> tuple[dict, str]:
+    """Fetch one listings page; on 401, force-refresh the token and retry once.
+
+    Returns (page, token) — the token may have been replaced by the refresh.
+    """
+    try:
+        page = get_shop_listings(token, store.etsy_shop_id, limit=PAGE_SIZE, offset=offset)
+        return page, token
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code != 401:
+            raise
+        token = get_valid_access_token(db, store, force_refresh=True)
+        page = get_shop_listings(token, store.etsy_shop_id, limit=PAGE_SIZE, offset=offset)
+        return page, token
+
+
 @celery_app.task(name="tasks.sync.sync_store_listings", bind=True, max_retries=3)
 def sync_store_listings(self, store_id: str) -> dict:
     """Fetch all active listings from Etsy and upsert them into the listings table."""
@@ -82,9 +104,7 @@ def sync_store_listings(self, store_id: str) -> dict:
             synced = 0
             offset = 0
             while True:
-                page = get_shop_listings(
-                    token, store.etsy_shop_id, limit=PAGE_SIZE, offset=offset
-                )
+                page, token = _fetch_page(db, store, token, offset)
                 results = page.get("results") or []
                 for item in results:
                     etsy_listing_id = item["listing_id"]
@@ -110,6 +130,13 @@ def sync_store_listings(self, store_id: str) -> dict:
             store.sync_status = "idle"
             store.sync_error = None
             return {"status": "ok", "synced": synced}
+        except StoreNotConnectedError as exc:
+            # Refresh token is gone/revoked — retrying cannot help; the user
+            # has to reconnect the store via OAuth
+            store.status = "disconnected"
+            store.sync_status = "error"
+            store.sync_error = str(exc)[:1000]
+            return {"status": "error", "reason": "store_disconnected"}
         except Exception as exc:
             store.sync_status = "error"
             store.sync_error = str(exc)[:1000]
