@@ -111,5 +111,86 @@
       "prev": "Poprzednia",
       "next": "Następna"
     }
+  },
+  "listingDetail": {
+    "back": "Powrót do ofert",
+    "seoScore": "SEO {score}",
+    "analysisHeading": "Analiza SEO",
+    "noAnalysis": "Brak analizy. Uruchom analizę SEO AI, aby otrzymać rekomendacje dotyczące tytułu, tagów i opisu.",
+    "optimizationsHeading": "Optymalizacje",
+    "noOptimizations": "Brak optymalizacji. Uruchom analizę, a następnie utwórz optymalizacje z jej rekomendacji.",
+    "analyze": {
+      "run": "Uruchom analizę SEO",
+      "rerun": "Powtórz analizę",
+      "running": "Analizowanie... {progress}%",
+      "failed": "Analiza nie powiodła się. Spróbuj ponownie.",
+      "noCredits": "Za mało kredytów na tę analizę.",
+      "alreadyRunning": "Analiza dla tego sklepu już trwa."
+    },
+    "createOptimizations": {
+      "button": "Utwórz optymalizacje z analizy",
+      "creating": "Tworzenie...",
+      "failed": "Nie udało się utworzyć optymalizacji. Spróbuj ponownie."
+    },
+    "analysis": {
+      "priority": {
+        "critical": "Krytyczny",
+        "high": "Wysoki priorytet",
+        "medium": "Średni priorytet",
+        "low": "Niski priorytet"
+      },
+      "trafficLift": "+{pct}% szac. ruchu",
+      "analyzedAt": "Przeanalizowano {date}",
+      "scores": {
+        "overall": "Ogólny",
+        "title": "Tytuł",
+        "tags": "Tagi",
+        "description": "Opis"
+      },
+      "title": { "heading": "Rekomendacja tytułu" },
+      "tags": {
+        "heading": "Rekomendacje tagów",
+        "optimized": "Zalecany zestaw tagów",
+        "weak": "Słabe tagi do zamiany",
+        "missing": "Brakujące wartościowe tagi"
+      },
+      "description": {
+        "heading": "Rekomendacje opisu",
+        "missingSections": "Brakujące sekcje",
+        "additions": "Zalecane uzupełnienia",
+        "allGood": "Opis wygląda dobrze."
+      },
+      "competitorGap": "Luka wobec konkurencji"
+    }
+  },
+  "optimizations": {
+    "types": {
+      "title": "Tytuł",
+      "description": "Opis",
+      "tags": "Tagi",
+      "price": "Cena",
+      "images": "Zdjęcia"
+    },
+    "status": {
+      "pending": "Oczekuje na przegląd",
+      "approved": "Zatwierdzono",
+      "rejected": "Odrzucono",
+      "applying": "Stosowanie...",
+      "applied": "Zastosowano na Etsy",
+      "failed": "Błąd"
+    },
+    "actions": {
+      "approve": "Zatwierdź",
+      "reject": "Odrzuć",
+      "apply": "Zastosuj na Etsy",
+      "applying": "Stosowanie..."
+    },
+    "rejectedReason": "Powód: {reason}",
+    "errors": {
+      "etsyRejected": "Etsy odrzuciło aktualizację. Sprawdź ofertę na Etsy i spróbuj ponownie.",
+      "etsyUnavailable": "Etsy jest teraz niedostępne. Spróbuj za kilka minut.",
+      "storeDisconnected": "Połączenie z Etsy wygasło. Połącz sklep ponownie i spróbuj jeszcze raz.",
+      "generic": "Coś poszło nie tak. Spróbuj ponownie."
+    }
   }
 }

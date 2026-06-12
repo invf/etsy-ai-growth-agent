@@ -111,5 +111,86 @@
       "prev": "Previous",
       "next": "Next"
     }
+  },
+  "listingDetail": {
+    "back": "Back to listings",
+    "seoScore": "SEO {score}",
+    "analysisHeading": "SEO analysis",
+    "noAnalysis": "No analysis yet. Run an AI SEO analysis to get title, tag and description recommendations.",
+    "optimizationsHeading": "Optimizations",
+    "noOptimizations": "No optimizations yet. Run an analysis, then create optimizations from its recommendations.",
+    "analyze": {
+      "run": "Run SEO analysis",
+      "rerun": "Re-run analysis",
+      "running": "Analyzing... {progress}%",
+      "failed": "Analysis failed. Please try again.",
+      "noCredits": "Not enough credits for this analysis.",
+      "alreadyRunning": "An analysis is already running for this store."
+    },
+    "createOptimizations": {
+      "button": "Create optimizations from analysis",
+      "creating": "Creating...",
+      "failed": "Could not create optimizations. Please try again."
+    },
+    "analysis": {
+      "priority": {
+        "critical": "Critical",
+        "high": "High priority",
+        "medium": "Medium priority",
+        "low": "Low priority"
+      },
+      "trafficLift": "+{pct}% est. traffic",
+      "analyzedAt": "Analyzed {date}",
+      "scores": {
+        "overall": "Overall",
+        "title": "Title",
+        "tags": "Tags",
+        "description": "Description"
+      },
+      "title": { "heading": "Title recommendation" },
+      "tags": {
+        "heading": "Tag recommendations",
+        "optimized": "Recommended tag set",
+        "weak": "Weak tags to replace",
+        "missing": "Missing high-value tags"
+      },
+      "description": {
+        "heading": "Description recommendations",
+        "missingSections": "Missing sections",
+        "additions": "Recommended additions",
+        "allGood": "The description looks good."
+      },
+      "competitorGap": "Competitor gap"
+    }
+  },
+  "optimizations": {
+    "types": {
+      "title": "Title",
+      "description": "Description",
+      "tags": "Tags",
+      "price": "Price",
+      "images": "Images"
+    },
+    "status": {
+      "pending": "Pending review",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "applying": "Applying...",
+      "applied": "Applied to Etsy",
+      "failed": "Failed"
+    },
+    "actions": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "apply": "Apply to Etsy",
+      "applying": "Applying..."
+    },
+    "rejectedReason": "Reason: {reason}",
+    "errors": {
+      "etsyRejected": "Etsy rejected the update. Check the listing on Etsy and try again.",
+      "etsyUnavailable": "Etsy is unavailable right now. Try again in a few minutes.",
+      "storeDisconnected": "Etsy connection expired. Reconnect the store and try again.",
+      "generic": "Something went wrong. Please try again."
+    }
   }
 }

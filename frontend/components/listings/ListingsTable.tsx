@@ -101,9 +101,13 @@ export default function ListingsTable({
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="truncate font-medium text-zinc-900" title={listing.title ?? ''}>
+                    <Link
+                      href={`/dashboard/stores/${query.store}/listings/${listing.id}`}
+                      className="block truncate font-medium text-zinc-900 hover:text-indigo-600"
+                      title={listing.title ?? ''}
+                    >
                       {listing.title ?? '—'}
-                    </p>
+                    </Link>
                     <p className="truncate text-xs text-zinc-500">
                       {listing.tags.slice(0, 3).join(' · ')}
                     </p>

@@ -1,14 +1,18 @@
 import type {
+  AgentRunStatus,
   AuthResponse,
+  ListingDetail,
   ListingsMeta,
   ListingSummary,
   OAuthInitiate,
+  Optimization,
   RegisterData,
+  SeoAnalysis,
   Store,
   UserProfile,
 } from '@/types'
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/v1'
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/v1'
 
 export class ApiError extends Error {
   code?: string
@@ -87,5 +91,54 @@ export const api = {
         { token }
       )
     },
+    get: (token: string, storeId: string, listingId: string) =>
+      apiFetch<ListingDetail>(`/stores/${storeId}/listings/${listingId}`, {
+        token,
+      }),
+  },
+  seo: {
+    get: (token: string, listingId: string) =>
+      apiFetch<SeoAnalysis>(`/listings/${listingId}/seo`, { token }),
+    analyze: (token: string, listingId: string) =>
+      apiFetch<{ run_id: string; status: string; credits_reserved: number }>(
+        `/listings/${listingId}/seo/analyze`,
+        { method: 'POST', token }
+      ),
+    apply: (token: string, listingId: string, fields?: string[]) =>
+      apiFetch<{ optimization_ids: string[]; skipped: string[]; message: string }>(
+        `/listings/${listingId}/seo/apply`,
+        {
+          method: 'POST',
+          token,
+          ...(fields ? { body: JSON.stringify({ fields }) } : {}),
+        }
+      ),
+  },
+  optimizations: {
+    list: (token: string, storeId: string, status = 'pending') =>
+      apiFetch<Optimization[]>(
+        `/stores/${storeId}/optimizations?status=${status}`,
+        { token }
+      ),
+    approve: (token: string, id: string) =>
+      apiFetch<Optimization>(`/optimizations/${id}/approve`, {
+        method: 'POST',
+        token,
+      }),
+    reject: (token: string, id: string, reason?: string) =>
+      apiFetch<Optimization>(`/optimizations/${id}/reject`, {
+        method: 'POST',
+        token,
+        ...(reason ? { body: JSON.stringify({ reason }) } : {}),
+      }),
+    apply: (token: string, id: string) =>
+      apiFetch<{ id: string; status: string }>(`/optimizations/${id}/apply`, {
+        method: 'POST',
+        token,
+      }),
+  },
+  agent: {
+    run: (token: string, runId: string) =>
+      apiFetch<AgentRunStatus>(`/agent/runs/${runId}`, { token }),
   },
 }

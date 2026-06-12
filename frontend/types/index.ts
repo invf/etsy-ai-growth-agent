@@ -75,3 +75,87 @@ export interface ListingsMeta {
   total: number
   total_pages: number
 }
+
+export interface ListingDetail extends ListingSummary {
+  description: string | null
+  materials: string[]
+  original_price: string | null
+  quantity: number | null
+  is_customizable: boolean
+  image_urls: string[]
+  average_rating: string | null
+  review_count: number
+  seo_scored_at: string | null
+  image_scored_at: string | null
+  taxonomy_path: string[]
+  etsy_created_at: string | null
+  created_at: string
+}
+
+export interface SeoAnalysis {
+  id: string
+  run_id: string | null
+  overall_score: number
+  title_score: number | null
+  tags_score: number | null
+  description_score: number | null
+  priority: 'critical' | 'high' | 'medium' | 'low'
+  title_analysis: {
+    current_title: string | null
+    optimized_title: string | null
+    primary_keyword: string | null
+    keyword_position: string | null
+    issues: string[]
+    change_rationale: string | null
+  }
+  tags_analysis: {
+    current_tags: string[]
+    optimized_tags: string[]
+    weak_tags: string[]
+    missing_high_value_tags: string[]
+    replacements: { remove: string; add: string; reason: string }[]
+  }
+  description_analysis: {
+    issues: string[]
+    recommended_additions: string[]
+    first_paragraph_ok: boolean
+  }
+  estimated_traffic_lift_pct: number | null
+  competitor_gap_summary: string | null
+  from_cache: boolean
+  model_used: string | null
+  cost_usd: number | null
+  created_at: string
+}
+
+export interface Optimization {
+  id: string
+  listing_id: string
+  run_id: string | null
+  type: 'title' | 'description' | 'tags' | 'price' | 'images'
+  old_value: string | string[] | null
+  new_value: string | string[]
+  change_summary: string | null
+  impact_estimate: Record<string, number> | null
+  status: 'pending' | 'approved' | 'rejected' | 'applying' | 'applied' | 'failed'
+  approved_at: string | null
+  approved_by: string | null
+  rejected_at: string | null
+  rejection_reason: string | null
+  applied_at: string | null
+  etsy_update_status: string | null
+  created_at: string
+}
+
+export interface AgentRunStatus {
+  id: string
+  store_id: string
+  run_type: string
+  status: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled'
+  progress_pct: number
+  current_phase: string | null
+  result_summary: Record<string, unknown> | null
+  error_message: string | null
+  credits_reserved: number
+  credits_used: number
+}
