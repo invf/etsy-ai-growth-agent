@@ -1,0 +1,64 @@
+from typing import Literal
+
+from pydantic import BaseModel, Field, field_validator
+
+ETSY_MAX_TAGS = 13
+ETSY_MAX_TAG_LENGTH = 20
+
+
+class TagReplacement(BaseModel):
+    remove: str
+    add: str
+    reason: str
+
+
+class TitleAnalysis(BaseModel):
+    score: int = Field(ge=0, le=100)
+    character_count: int
+    primary_keyword_present: bool
+    primary_keyword_position: Literal[
+        "first_3_words", "first_half", "second_half", "absent"
+    ]
+    issues: list[str]
+    optimized_title: str = Field(max_length=140)
+    title_change_rationale: str
+
+
+class TagsAnalysis(BaseModel):
+    score: int = Field(ge=0, le=100)
+    current_tag_count: int
+    unused_slots: int
+    weak_tags: list[str]
+    missing_high_value_tags: list[str] = Field(max_length=5)
+    replacement_tags: list[TagReplacement]
+    full_optimized_tag_set: list[str] = Field(max_length=ETSY_MAX_TAGS)
+
+    @field_validator("full_optimized_tag_set")
+    @classmethod
+    def tags_within_etsy_limit(cls, tags: list[str]) -> list[str]:
+        too_long = [t for t in tags if len(t) > ETSY_MAX_TAG_LENGTH]
+        if too_long:
+            raise ValueError(
+                f"tags exceed Etsy's {ETSY_MAX_TAG_LENGTH}-char limit: {too_long}"
+            )
+        return tags
+
+
+class DescriptionAnalysis(BaseModel):
+    score: int = Field(ge=0, le=100)
+    keyword_density_ok: bool
+    missing_sections: list[str]
+    first_paragraph_optimized: bool
+    recommended_additions: list[str]
+
+
+class SeoAnalysisResult(BaseModel):
+    """Validated structured output of the SEO Analyzer (ai-agent-spec §3.1)."""
+
+    overall_score: int = Field(ge=0, le=100)
+    title_analysis: TitleAnalysis
+    tags_analysis: TagsAnalysis
+    description_analysis: DescriptionAnalysis
+    priority: Literal["critical", "high", "medium", "low"]
+    estimated_traffic_lift_percent: int
+    competitor_gap_summary: str

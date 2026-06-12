@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ETSY_TOKEN_ENCRYPTION_KEY: str
     ANTHROPIC_API_KEY: str = ""
+    # Deep analysis/synthesis (SEO, competitor, strategy) vs fast extraction
+    AI_MODEL_PRIMARY: str = "claude-fable-5"
+    AI_MODEL_FAST: str = "claude-haiku-4-5"
     VOYAGE_API_KEY: str = ""
     ETSY_CLIENT_ID: str = ""
     ETSY_CLIENT_SECRET: str = ""
