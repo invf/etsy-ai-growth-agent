@@ -2,7 +2,16 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import agent, auth, billing, listings, optimizations, seo, stores
+from app.api.routes import (
+    agent,
+    auth,
+    billing,
+    listings,
+    optimizations,
+    seo,
+    stores,
+    webhooks,
+)
 from app.core.config import settings
 
 if settings.APP_ENV == "production" and settings.SENTRY_DSN:
@@ -30,6 +39,7 @@ app.include_router(seo.router, prefix="/v1")
 app.include_router(optimizations.router, prefix="/v1")
 app.include_router(agent.router, prefix="/v1")
 app.include_router(billing.router, prefix="/v1")
+app.include_router(webhooks.router)  # Paddle posts to /webhooks/paddle (no /v1)
 
 
 @app.get("/health")
