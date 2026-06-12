@@ -12,6 +12,7 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "pricing": "Pricing",
     "stores": "Stores",
     "signIn": "Sign in",
     "signOut": "Sign out",
@@ -147,7 +148,9 @@
         "tags": "Tags",
         "description": "Description"
       },
-      "title": { "heading": "Title recommendation" },
+      "title": {
+        "heading": "Title recommendation"
+      },
       "tags": {
         "heading": "Tag recommendations",
         "optimized": "Recommended tag set",
@@ -191,6 +194,34 @@
       "etsyUnavailable": "Etsy is unavailable right now. Try again in a few minutes.",
       "storeDisconnected": "Etsy connection expired. Reconnect the store and try again.",
       "generic": "Something went wrong. Please try again."
+    }
+  },
+  "pricing": {
+    "title": "Simple pricing that grows with you",
+    "subtitle": "Start with a 14-day free trial. Upgrade when your shop is ready for more AI horsepower.",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "annualSave": "save 20%",
+    "perMonth": "/ month",
+    "billedAnnually": "Billed annually (${total}/yr)",
+    "popular": "Most popular",
+    "subscribe": "Subscribe",
+    "startTrial": "Start 14-day free trial",
+    "checkoutUnavailable": "Checkout is not configured yet.",
+    "footnote": "Prices in USD. Taxes handled by Paddle. Cancel anytime.",
+    "bullets": {
+      "credits": "{count} AI credits / month",
+      "stores": "{count, plural, one {# Etsy store} other {# Etsy stores}}",
+      "analysisCap": "Up to {count} listings analyzed daily",
+      "unlimitedAnalyses": "Unlimited listing analyses",
+      "rollover": "{pct}% credit rollover"
+    },
+    "features": {
+      "audience": "Audience discovery",
+      "monthly_plan": "Monthly strategic plan",
+      "ab_testing": "A/B testing",
+      "api_access": "API access",
+      "white_label": "White label"
     }
   }
 }

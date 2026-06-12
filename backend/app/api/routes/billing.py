@@ -1,0 +1,35 @@
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+
+from app.db.models.billing import SubscriptionPlan
+from app.db.session import get_db
+
+router = APIRouter(prefix="/billing", tags=["billing"])
+
+
+def _plan_to_dict(plan: SubscriptionPlan) -> dict:
+    return {
+        "name": plan.name,
+        "display_name": plan.display_name,
+        "price_monthly_usd": float(plan.price_monthly_usd),
+        "price_annual_usd": float(plan.price_annual_usd),
+        "max_stores": plan.max_stores,
+        "credits_monthly": plan.credits_monthly,
+        "credits_rollover_pct": plan.credits_rollover_pct,
+        "listing_analysis_cap": plan.listing_analysis_cap,
+        "features": plan.features,
+        "paddle_price_id_monthly": plan.paddle_price_id_monthly,
+        "paddle_price_id_annual": plan.paddle_price_id_annual,
+    }
+
+
+@router.get("/plans", response_model=dict)
+def list_plans(db: Session = Depends(get_db)):
+    """Public plan catalog for the pricing page (no auth required)."""
+    plans = (
+        db.query(SubscriptionPlan)
+        .filter_by(is_active=True)
+        .order_by(SubscriptionPlan.price_monthly_usd.asc())
+        .all()
+    )
+    return {"data": [_plan_to_dict(plan) for plan in plans]}

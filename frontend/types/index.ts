@@ -147,6 +147,20 @@ export interface Optimization {
   created_at: string
 }
 
+export interface SubscriptionPlan {
+  name: 'trial' | 'starter' | 'growth' | 'pro' | 'agency'
+  display_name: string
+  price_monthly_usd: number
+  price_annual_usd: number
+  max_stores: number
+  credits_monthly: number
+  credits_rollover_pct: number
+  listing_analysis_cap: number | null
+  features: Record<string, boolean | string>
+  paddle_price_id_monthly: string | null
+  paddle_price_id_annual: string | null
+}
+
 export interface AgentRunStatus {
   id: string
   store_id: string

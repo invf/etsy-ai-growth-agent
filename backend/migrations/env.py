@@ -9,6 +9,7 @@ from app.db.base import Base
 # Import all models so Alembic sees them
 from app.db.models import (  # noqa: F401
     agent_run,
+    billing,
     listing,
     optimization,
     seo_analysis,

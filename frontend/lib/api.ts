@@ -9,6 +9,7 @@ import type {
   RegisterData,
   SeoAnalysis,
   Store,
+  SubscriptionPlan,
   UserProfile,
 } from '@/types'
 
@@ -140,5 +141,8 @@ export const api = {
   agent: {
     run: (token: string, runId: string) =>
       apiFetch<AgentRunStatus>(`/agent/runs/${runId}`, { token }),
+  },
+  billing: {
+    plans: () => apiFetch<SubscriptionPlan[]>('/billing/plans'),
   },
 }

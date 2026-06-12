@@ -12,6 +12,7 @@
   },
   "nav": {
     "dashboard": "Panel",
+    "pricing": "Cennik",
     "stores": "Sklepy",
     "signIn": "Zaloguj się",
     "signOut": "Wyloguj się",
@@ -147,7 +148,9 @@
         "tags": "Tagi",
         "description": "Opis"
       },
-      "title": { "heading": "Rekomendacja tytułu" },
+      "title": {
+        "heading": "Rekomendacja tytułu"
+      },
       "tags": {
         "heading": "Rekomendacje tagów",
         "optimized": "Zalecany zestaw tagów",
@@ -191,6 +194,34 @@
       "etsyUnavailable": "Etsy jest teraz niedostępne. Spróbuj za kilka minut.",
       "storeDisconnected": "Połączenie z Etsy wygasło. Połącz sklep ponownie i spróbuj jeszcze raz.",
       "generic": "Coś poszło nie tak. Spróbuj ponownie."
+    }
+  },
+  "pricing": {
+    "title": "Proste ceny, które rosną razem z Tobą",
+    "subtitle": "Zacznij od 14-dniowego darmowego okresu próbnego. Przejdź wyżej, gdy Twój sklep będzie gotowy na więcej AI.",
+    "monthly": "Miesięcznie",
+    "annual": "Rocznie",
+    "annualSave": "oszczędź 20%",
+    "perMonth": "/ miesiąc",
+    "billedAnnually": "Rozliczane rocznie (${total}/rok)",
+    "popular": "Najpopularniejszy",
+    "subscribe": "Subskrybuj",
+    "startTrial": "Rozpocznij 14-dniowy okres próbny",
+    "checkoutUnavailable": "Płatności nie są jeszcze skonfigurowane.",
+    "footnote": "Ceny w USD. Podatkami zajmuje się Paddle. Anuluj w dowolnym momencie.",
+    "bullets": {
+      "credits": "{count} kredytów AI / miesiąc",
+      "stores": "{count, plural, one {# sklep Etsy} few {# sklepy Etsy} other {# sklepów Etsy}}",
+      "analysisCap": "Do {count} ofert analizowanych dziennie",
+      "unlimitedAnalyses": "Nielimitowane analizy ofert",
+      "rollover": "Przeniesienie {pct}% kredytów"
+    },
+    "features": {
+      "audience": "Odkrywanie odbiorców",
+      "monthly_plan": "Miesięczny plan strategiczny",
+      "ab_testing": "Testy A/B",
+      "api_access": "Dostęp do API",
+      "white_label": "White label"
     }
   }
 }
