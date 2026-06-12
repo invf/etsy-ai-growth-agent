@@ -2,7 +2,7 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, listings, seo, stores
+from app.api.routes import auth, listings, optimizations, seo, stores
 from app.core.config import settings
 
 if settings.APP_ENV == "production" and settings.SENTRY_DSN:
@@ -27,6 +27,7 @@ app.include_router(auth.router, prefix="/v1")
 app.include_router(stores.router, prefix="/v1")
 app.include_router(listings.router, prefix="/v1")
 app.include_router(seo.router, prefix="/v1")
+app.include_router(optimizations.router, prefix="/v1")
 
 
 @app.get("/health")

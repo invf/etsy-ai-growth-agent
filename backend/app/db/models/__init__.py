@@ -1,5 +1,6 @@
 from app.db.models.agent_run import AgentRun, AgentRunLog
 from app.db.models.listing import Listing, ListingMetricsHistory
+from app.db.models.optimization import ListingOptimization
 from app.db.models.seo_analysis import SeoAnalysis
 from app.db.models.session import OAuthAccount, PasswordResetToken, UserSession
 from app.db.models.store import Store
@@ -16,4 +17,5 @@ __all__ = [
     "AgentRun",
     "AgentRunLog",
     "SeoAnalysis",
+    "ListingOptimization",
 ]

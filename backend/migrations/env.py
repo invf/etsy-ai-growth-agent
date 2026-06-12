@@ -10,6 +10,7 @@ from app.db.base import Base
 from app.db.models import (  # noqa: F401
     agent_run,
     listing,
+    optimization,
     seo_analysis,
     session,
     store,

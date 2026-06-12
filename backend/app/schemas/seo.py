@@ -62,3 +62,15 @@ class SeoAnalysisResult(BaseModel):
     priority: Literal["critical", "high", "medium", "low"]
     estimated_traffic_lift_percent: int
     competitor_gap_summary: str
+
+
+class SeoApplyIn(BaseModel):
+    """Which recommendation fields to turn into pending optimizations."""
+
+    fields: list[Literal["title", "tags"]] = Field(
+        default=["title", "tags"], min_length=1
+    )
+
+
+class OptimizationRejectIn(BaseModel):
+    reason: str | None = Field(default=None, max_length=1000)
