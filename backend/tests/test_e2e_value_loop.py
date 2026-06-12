@@ -86,6 +86,10 @@ def world(monkeypatch):
     monkeypatch.setattr(seo_routes, "get_credit_service", lambda: credits)
     monkeypatch.setattr(seo_task, "get_credit_service", lambda: credits)
 
+    from app.services import notification_service
+
+    monkeypatch.setattr(notification_service, "get_credit_service", lambda: credits)
+
     # Claude: real AIService parsing a canned tool_use response
     ai_response = SimpleNamespace(
         content=[

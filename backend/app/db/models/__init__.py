@@ -1,6 +1,7 @@
 from app.db.models.agent_run import AgentRun, AgentRunLog
 from app.db.models.billing import CreditTransaction, PaddleEvent, SubscriptionPlan
 from app.db.models.listing import Listing, ListingMetricsHistory
+from app.db.models.notification import Notification
 from app.db.models.optimization import ListingOptimization
 from app.db.models.seo_analysis import SeoAnalysis
 from app.db.models.session import OAuthAccount, PasswordResetToken, UserSession
@@ -22,4 +23,5 @@ __all__ = [
     "SubscriptionPlan",
     "CreditTransaction",
     "PaddleEvent",
+    "Notification",
 ]

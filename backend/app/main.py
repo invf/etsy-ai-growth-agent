@@ -7,6 +7,7 @@ from app.api.routes import (
     auth,
     billing,
     listings,
+    notifications,
     optimizations,
     seo,
     stores,
@@ -39,6 +40,7 @@ app.include_router(seo.router, prefix="/v1")
 app.include_router(optimizations.router, prefix="/v1")
 app.include_router(agent.router, prefix="/v1")
 app.include_router(billing.router, prefix="/v1")
+app.include_router(notifications.router, prefix="/v1")
 app.include_router(webhooks.router)  # Paddle posts to /webhooks/paddle (no /v1)
 
 

@@ -16,7 +16,9 @@ from app.main import app
 
 @pytest.fixture
 def user():
-    return MagicMock(id=uuid.uuid4(), credits_balance=30)
+    return MagicMock(
+        id=uuid.uuid4(), credits_balance=30, subscription_tier="starter"
+    )
 
 
 @pytest.fixture
@@ -24,7 +26,7 @@ def credits(monkeypatch):
     from app.api.routes import seo as seo_routes
 
     service = MagicMock()
-    service.reserve.return_value = True
+    service.reserve.return_value = "ok"
     monkeypatch.setattr(seo_routes, "get_credit_service", lambda: service)
     return service
 
@@ -142,7 +144,7 @@ def test_trigger_seo_409_when_already_running(user):
 
 
 def test_trigger_seo_402_when_credits_insufficient(user, credits):
-    credits.reserve.return_value = False
+    credits.reserve.return_value = "insufficient_balance"
     credits.available.return_value = 1
     client = _client(_db(listing=_listing(), store=MagicMock(), running=None), user)
 
@@ -152,6 +154,20 @@ def test_trigger_seo_402_when_credits_insufficient(user, credits):
     detail = resp.json()["detail"]
     assert detail["code"] == "INSUFFICIENT_CREDITS"
     assert detail["details"] == {"required": 2, "available": 1}
+
+
+def test_trigger_seo_429_when_daily_cap_exceeded(user, credits):
+    credits.reserve.return_value = "daily_cap_exceeded"
+    credits.daily_cap.return_value = 30
+    credits.daily_used.return_value = 30
+    client = _client(_db(listing=_listing(), store=MagicMock(), running=None), user)
+
+    resp = client.post(f"/v1/listings/{uuid.uuid4()}/seo/analyze")
+
+    assert resp.status_code == 429
+    detail = resp.json()["detail"]
+    assert detail["code"] == "DAILY_LIMIT_EXCEEDED"
+    assert detail["details"] == {"daily_cap": 30, "daily_used": 30}
 
 
 def test_trigger_seo_queues_task_and_returns_run_id(user, credits, monkeypatch):
@@ -173,7 +189,7 @@ def test_trigger_seo_queues_task_and_returns_run_id(user, credits, monkeypatch):
     run_id = data["run_id"]
 
     # Credits were held atomically for this run
-    credits.reserve.assert_called_once_with(str(user.id), 2, run_id, 30)
+    credits.reserve.assert_called_once_with(str(user.id), 2, run_id, 30, "starter")
 
     # The queued Celery task carries the run id as its task_id
     apply_async.assert_called_once()

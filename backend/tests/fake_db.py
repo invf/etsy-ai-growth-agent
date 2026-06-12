@@ -87,6 +87,9 @@ class FakeQuery:
             )
         return FakeQuery(self.db, self.model, rows)
 
+    def limit(self, n):
+        return FakeQuery(self.db, self.model, self.rows[:n])
+
     def first(self):
         return self.rows[0][self.model] if self.rows else None
 
@@ -141,7 +144,7 @@ class FakeDB:
 
 class FakeRedis:
     """Implements the handful of commands CreditService uses, including
-    a Python emulation of its reserve Lua script."""
+    Python emulations of its reserve / refund Lua scripts."""
 
     def __init__(self):
         self.store: dict[str, str] = {}
@@ -149,13 +152,31 @@ class FakeRedis:
     def get(self, key):
         return self.store.get(key)
 
+    def set(self, key, value, nx=False, ex=None):
+        if nx and key in self.store:
+            return None
+        self.store[key] = str(value)
+        return True
+
     def eval(self, script, numkeys, *args):
         keys, argv = args[:numkeys], args[numkeys:]
+        if numkeys == 1:  # DECR_FLOOR_LUA: refund a counter, floored at zero
+            current = int(self.store.get(keys[0]) or 0)
+            amount = int(argv[0])
+            if current > 0:
+                self.store[keys[0]] = str(current - min(current, amount))
+            return None
+        # RESERVE_LUA
         reserved = int(self.store.get(keys[0]) or 0)
+        daily_used = int(self.store.get(keys[2]) or 0)
         amount, balance = int(argv[0]), int(argv[1])
+        daily_cap = int(argv[3])
         if balance - reserved < amount:
             return 0
+        if daily_used + amount > daily_cap:
+            return -1
         self.store[keys[0]] = str(reserved + amount)
+        self.store[keys[2]] = str(daily_used + amount)
         self.store[keys[1]] = str(amount)
         return 1
 

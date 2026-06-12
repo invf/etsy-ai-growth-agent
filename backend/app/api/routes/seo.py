@@ -139,9 +139,30 @@ def trigger_seo_analysis(
     run_id = str(run.id)
 
     # Atomic check-and-hold; settled or released by the task
-    if not credits.reserve(
-        str(current_user.id), SEO_ANALYSIS_COST, run_id, current_user.credits_balance
-    ):
+    result = credits.reserve(
+        str(current_user.id),
+        SEO_ANALYSIS_COST,
+        run_id,
+        current_user.credits_balance,
+        current_user.subscription_tier,
+    )
+    if result == "daily_cap_exceeded":
+        cap = credits.daily_cap(current_user.subscription_tier)
+        raise HTTPException(
+            429,
+            detail={
+                "code": "DAILY_LIMIT_EXCEEDED",
+                "message": (
+                    f"Daily credit limit of {cap} reached for the "
+                    f"{current_user.subscription_tier} plan. Resets at midnight UTC."
+                ),
+                "details": {
+                    "daily_cap": cap,
+                    "daily_used": credits.daily_used(str(current_user.id)),
+                },
+            },
+        )
+    if result == "insufficient_balance":
         available = credits.available(
             str(current_user.id), current_user.credits_balance
         )

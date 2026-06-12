@@ -79,6 +79,8 @@ def credits(monkeypatch):
     service = MagicMock()
     service.settle.return_value = 2
     monkeypatch.setattr(seo_mod, "get_credit_service", lambda: service)
+    # Unit tests for the task don't exercise the low-credit notify path
+    monkeypatch.setattr(seo_mod, "check_and_notify_low_credits", MagicMock())
     return service
 
 

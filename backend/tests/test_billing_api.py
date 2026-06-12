@@ -109,6 +109,8 @@ def test_credits_endpoint_computes_availability(monkeypatch):
 
     service = MagicMock()
     service.reserved.return_value = 5
+    service.daily_used.return_value = 7
+    service.daily_cap.return_value = 60
     monkeypatch.setattr(billing_routes, "get_credit_service", lambda: service)
 
     user = _growth_user()
@@ -124,6 +126,8 @@ def test_credits_endpoint_computes_availability(monkeypatch):
         "balance": 247,
         "reserved": 5,
         "available": 242,
+        "daily_used": 7,
+        "daily_cap": 60,
         "monthly_allotment": 300,
         "next_renewal_date": "2026-07-10",
         "rollover_percent": 50,

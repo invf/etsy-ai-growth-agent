@@ -87,7 +87,8 @@ def get_credits(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    reserved = get_credit_service().reserved(str(current_user.id))
+    credits = get_credit_service()
+    reserved = credits.reserved(str(current_user.id))
     available = current_user.credits_balance - reserved
     plan = _current_plan(db, current_user)
     allotment = plan.credits_monthly if plan else 0
@@ -97,6 +98,8 @@ def get_credits(
             "balance": current_user.credits_balance,
             "reserved": reserved,
             "available": available,
+            "daily_used": credits.daily_used(str(current_user.id)),
+            "daily_cap": credits.daily_cap(current_user.subscription_tier),
             "monthly_allotment": allotment,
             "next_renewal_date": (
                 current_user.subscription_current_period_end.date().isoformat()

@@ -12,6 +12,7 @@ from app.db.session import get_db_session
 from app.schemas.seo import SeoAnalysisResult
 from app.services.ai_service import AIRefusalError, AIUsage
 from app.services.credit_service import get_credit_service
+from app.services.notification_service import check_and_notify_low_credits
 from app.services.prompts.seo_analyzer import analyze_listing_seo
 
 
@@ -71,6 +72,7 @@ def _settle_credits(db: Session, run: AgentRun) -> None:
         user = db.query(User).filter_by(id=run.user_id).first()
         if user is not None:
             run.credits_used = get_credit_service().settle(str(run.id), user)
+            check_and_notify_low_credits(db, user)
     except Exception:
         pass
 
