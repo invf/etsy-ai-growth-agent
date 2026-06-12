@@ -27,6 +27,12 @@ export default async function Header() {
               >
                 {tNav('dashboard')}
               </Link>
+              <Link
+                href="/dashboard/stores"
+                className="text-sm font-medium text-zinc-600 hover:text-zinc-900"
+              >
+                {tNav('stores')}
+              </Link>
               <SignOutButton />
             </>
           ) : (

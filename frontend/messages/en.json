@@ -12,6 +12,7 @@
   },
   "nav": {
     "dashboard": "Dashboard",
+    "stores": "Stores",
     "signIn": "Sign in",
     "signOut": "Sign out",
     "register": "Create account"
@@ -61,6 +62,54 @@
       "credits": "Credits",
       "plan": "Plan",
       "trialEnds": "Trial ends"
+    }
+  },
+  "stores": {
+    "title": "Your stores",
+    "subtitle": "Connect your Etsy store and keep your listings in sync.",
+    "connectedBanner": "Store \"{shopName}\" connected! The first listing sync has started.",
+    "storeMeta": "{count, plural, one {# listing} other {# listings}}",
+    "connect": {
+      "button": "Connect Etsy Store",
+      "redirecting": "Redirecting to Etsy..."
+    },
+    "sync": {
+      "button": "Sync now",
+      "syncing": "Syncing...",
+      "lastSynced": "Last synced {date}",
+      "never": "Never synced"
+    },
+    "empty": {
+      "title": "No store connected yet",
+      "description": "Connect your Etsy store to import your listings and start getting AI-powered recommendations."
+    },
+    "oauthErrors": {
+      "OAUTH_STATE_MISMATCH": "The connection request expired or was tampered with. Please try again.",
+      "OAUTH_FAILED": "Etsy connection failed. Please try again.",
+      "generic": "Something went wrong while connecting your store. Please try again."
+    },
+    "errors": {
+      "storeLimit": "Your plan's store limit is reached. Upgrade to connect more stores.",
+      "connectFailed": "Could not start the Etsy connection. Please try again.",
+      "syncFailed": "Could not start the sync. Please try again.",
+      "listingsFailed": "Could not load listings. Please try again."
+    },
+    "listings": {
+      "search": "Search listings...",
+      "empty": "No listings yet. Run a sync to import your Etsy listings.",
+      "noResults": "No listings match your search.",
+      "columns": {
+        "listing": "Listing",
+        "state": "State",
+        "price": "Price",
+        "views": "Views",
+        "favorites": "Favorites",
+        "sales": "Sales",
+        "seoScore": "SEO"
+      },
+      "pagination": "Page {page} of {totalPages} · {total, plural, one {# listing} other {# listings}}",
+      "prev": "Previous",
+      "next": "Next"
     }
   }
 }

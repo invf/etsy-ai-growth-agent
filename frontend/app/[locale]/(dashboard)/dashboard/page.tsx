@@ -4,7 +4,8 @@ import { Zap } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { api } from '@/lib/api'
 import type { UserProfile } from '@/types'
-import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/navigation'
+import { buttonVariants } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function DashboardPage({
@@ -86,9 +87,9 @@ export default async function DashboardPage({
           {t('connectStore.title')}
         </h2>
         <p className="mt-1 max-w-sm text-zinc-500">{t('connectStore.description')}</p>
-        <Button className="mt-4" disabled>
+        <Link href="/dashboard/stores" className={buttonVariants({ className: 'mt-4' })}>
           {t('connectStore.button')}
-        </Button>
+        </Link>
       </div>
     </main>
   )

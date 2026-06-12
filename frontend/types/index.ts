@@ -24,3 +24,54 @@ export interface RegisterData {
   password: string
   timezone?: string
 }
+
+export interface Store {
+  id: string
+  etsy_shop_id: string
+  shop_name: string
+  shop_url: string | null
+  icon_url: string | null
+  currency_code: string
+  status: string
+  sync_status: 'idle' | 'syncing' | 'error' | string
+  listing_count: number
+  health_score: number | null
+  health_computed_at: string | null
+  agent_enabled: boolean
+  agent_last_run_at: string | null
+  last_synced_at: string | null
+  created_at: string
+}
+
+export interface OAuthInitiate {
+  oauth_url: string
+  state: string
+  expires_in: number
+}
+
+export interface ListingSummary {
+  id: string
+  etsy_listing_id: number
+  title: string | null
+  price_usd: string | null
+  currency_code: string
+  state: string
+  main_image_url: string | null
+  image_count: number
+  views_count: number
+  favorites_count: number
+  sales_count: number
+  seo_score: number | null
+  image_score: number | null
+  tags: string[]
+  primary_category: string | null
+  etsy_updated_at: string | null
+  synced_at: string
+}
+
+export interface ListingsMeta {
+  page: number
+  per_page: number
+  total: number
+  total_pages: number
+}

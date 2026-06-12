@@ -12,6 +12,7 @@
   },
   "nav": {
     "dashboard": "Panel",
+    "stores": "Sklepy",
     "signIn": "Zaloguj się",
     "signOut": "Wyloguj się",
     "register": "Utwórz konto"
@@ -61,6 +62,54 @@
       "credits": "Kredyty",
       "plan": "Plan",
       "trialEnds": "Okres próbny do"
+    }
+  },
+  "stores": {
+    "title": "Twoje sklepy",
+    "subtitle": "Połącz swój sklep Etsy i synchronizuj oferty.",
+    "connectedBanner": "Sklep „{shopName}” został połączony! Pierwsza synchronizacja ofert została rozpoczęta.",
+    "storeMeta": "{count, plural, one {# oferta} few {# oferty} other {# ofert}}",
+    "connect": {
+      "button": "Połącz sklep Etsy",
+      "redirecting": "Przekierowywanie do Etsy..."
+    },
+    "sync": {
+      "button": "Synchronizuj",
+      "syncing": "Synchronizacja...",
+      "lastSynced": "Ostatnia synchronizacja: {date}",
+      "never": "Jeszcze nie synchronizowano"
+    },
+    "empty": {
+      "title": "Brak połączonego sklepu",
+      "description": "Połącz swój sklep Etsy, aby zaimportować oferty i otrzymywać rekomendacje oparte na AI."
+    },
+    "oauthErrors": {
+      "OAUTH_STATE_MISMATCH": "Żądanie połączenia wygasło lub zostało naruszone. Spróbuj ponownie.",
+      "OAUTH_FAILED": "Połączenie z Etsy nie powiodło się. Spróbuj ponownie.",
+      "generic": "Coś poszło nie tak podczas łączenia sklepu. Spróbuj ponownie."
+    },
+    "errors": {
+      "storeLimit": "Osiągnięto limit sklepów w Twoim planie. Ulepsz plan, aby połączyć więcej sklepów.",
+      "connectFailed": "Nie udało się rozpocząć połączenia z Etsy. Spróbuj ponownie.",
+      "syncFailed": "Nie udało się uruchomić synchronizacji. Spróbuj ponownie.",
+      "listingsFailed": "Nie udało się załadować ofert. Spróbuj ponownie."
+    },
+    "listings": {
+      "search": "Szukaj ofert...",
+      "empty": "Brak ofert. Uruchom synchronizację, aby zaimportować oferty z Etsy.",
+      "noResults": "Brak ofert pasujących do wyszukiwania.",
+      "columns": {
+        "listing": "Oferta",
+        "state": "Status",
+        "price": "Cena",
+        "views": "Wyświetlenia",
+        "favorites": "Ulubione",
+        "sales": "Sprzedaże",
+        "seoScore": "SEO"
+      },
+      "pagination": "Strona {page} z {totalPages} · {total, plural, one {# oferta} few {# oferty} other {# ofert}}",
+      "prev": "Poprzednia",
+      "next": "Następna"
     }
   }
 }

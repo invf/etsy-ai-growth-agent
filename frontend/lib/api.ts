@@ -1,4 +1,12 @@
-import type { AuthResponse, RegisterData, UserProfile } from '@/types'
+import type {
+  AuthResponse,
+  ListingsMeta,
+  ListingSummary,
+  OAuthInitiate,
+  RegisterData,
+  Store,
+  UserProfile,
+} from '@/types'
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/v1'
 
@@ -13,10 +21,10 @@ export class ApiError extends Error {
   }
 }
 
-async function apiFetch<T>(
+async function apiFetch<T, M = Record<string, number>>(
   path: string,
   options: RequestInit & { token?: string } = {}
-): Promise<{ data: T; meta?: Record<string, number> }> {
+): Promise<{ data: T; meta?: M }> {
   const { token, ...fetchOptions } = options
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -48,5 +56,36 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+  },
+  stores: {
+    list: (token: string) => apiFetch<Store[]>('/stores', { token }),
+    connectInitiate: (token: string) =>
+      apiFetch<OAuthInitiate>('/stores/connect/initiate', {
+        method: 'POST',
+        token,
+      }),
+    sync: (token: string, storeId: string) =>
+      apiFetch<{ job_id: string; status: string }>(`/stores/${storeId}/sync`, {
+        method: 'POST',
+        token,
+      }),
+  },
+  listings: {
+    list: (
+      token: string,
+      storeId: string,
+      params: { page?: number; per_page?: number; sort?: string; q?: string } = {}
+    ) => {
+      const search = new URLSearchParams()
+      if (params.page) search.set('page', String(params.page))
+      if (params.per_page) search.set('per_page', String(params.per_page))
+      if (params.sort) search.set('sort', params.sort)
+      if (params.q) search.set('q', params.q)
+      const qs = search.toString()
+      return apiFetch<ListingSummary[], ListingsMeta>(
+        `/stores/${storeId}/listings${qs ? `?${qs}` : ''}`,
+        { token }
+      )
+    },
   },
 }
