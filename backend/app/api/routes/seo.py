@@ -13,6 +13,9 @@ from app.db.models.store import Store
 from app.db.models.user import User
 from app.db.session import get_db
 from app.schemas.seo import SeoApplyIn
+from app.services.credit_service import CREDITS_PER_OPERATION, get_credit_service
+
+SEO_ANALYSIS_COST = CREDITS_PER_OPERATION["seo_analysis_deep"]
 
 router = APIRouter(tags=["seo"])
 
@@ -123,7 +126,7 @@ def trigger_seo_analysis(
             },
         )
 
-    # Credit reservation/settlement arrives with CreditService (Day 19)
+    credits = get_credit_service()
     run = AgentRun(
         id=uuid.uuid4(),
         store_id=listing.store_id,
@@ -131,16 +134,46 @@ def trigger_seo_analysis(
         run_type="seo_analysis",
         triggered_by="user",
         status="pending",
+        credits_reserved=SEO_ANALYSIS_COST,
     )
+    run_id = str(run.id)
+
+    # Atomic check-and-hold; settled or released by the task
+    if not credits.reserve(
+        str(current_user.id), SEO_ANALYSIS_COST, run_id, current_user.credits_balance
+    ):
+        available = credits.available(
+            str(current_user.id), current_user.credits_balance
+        )
+        raise HTTPException(
+            402,
+            detail={
+                "code": "INSUFFICIENT_CREDITS",
+                "message": (
+                    f"Need {SEO_ANALYSIS_COST} credits; you have {available}."
+                ),
+                "details": {
+                    "required": SEO_ANALYSIS_COST,
+                    "available": available,
+                },
+            },
+        )
+
     db.add(run)
     db.flush()
-    run_id = str(run.id)
 
     from app.tasks.seo import analyze_single
 
     analyze_single.apply_async(args=[listing_id, run_id], task_id=run_id)
 
-    return {"data": {"run_id": run_id, "status": "pending", "estimated_seconds": 30}}
+    return {
+        "data": {
+            "run_id": run_id,
+            "status": "pending",
+            "credits_reserved": SEO_ANALYSIS_COST,
+            "estimated_seconds": 30,
+        }
+    }
 
 
 @router.post("/listings/{listing_id}/seo/apply", response_model=dict, status_code=201)

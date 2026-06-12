@@ -7,9 +7,11 @@ from app.celery_app import celery_app
 from app.db.models.agent_run import AgentRun, AgentRunLog
 from app.db.models.listing import Listing
 from app.db.models.seo_analysis import SeoAnalysis
+from app.db.models.user import User
 from app.db.session import get_db_session
 from app.schemas.seo import SeoAnalysisResult
 from app.services.ai_service import AIRefusalError, AIUsage
+from app.services.credit_service import get_credit_service
 from app.services.prompts.seo_analyzer import analyze_listing_seo
 
 
@@ -52,7 +54,25 @@ def _fail_run(db: Session, run: AgentRun, message: str, started: float) -> dict:
     run.error_message = message[:1000]
     run.completed_at = datetime.now(timezone.utc)
     run.duration_ms = int((time.monotonic() - started) * 1000)
+    _release_credits(run)
     return {"status": "failed", "error": message[:200]}
+
+
+def _release_credits(run: AgentRun) -> None:
+    # Best effort: the reservation TTL frees the hold even if Redis is down
+    try:
+        get_credit_service().release(str(run.user_id), str(run.id))
+    except Exception:
+        pass
+
+
+def _settle_credits(db: Session, run: AgentRun) -> None:
+    try:
+        user = db.query(User).filter_by(id=run.user_id).first()
+        if user is not None:
+            run.credits_used = get_credit_service().settle(str(run.id), user)
+    except Exception:
+        pass
 
 
 @celery_app.task(name="tasks.seo.analyze_single", bind=True)
@@ -127,6 +147,7 @@ def analyze_single(self, listing_id: str, run_id: str) -> dict:
             "overall_score": result.overall_score,
             "priority": result.priority,
         }
+        _settle_credits(db, run)
 
         db.flush()
         return {

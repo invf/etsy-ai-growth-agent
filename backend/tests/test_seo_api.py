@@ -16,7 +16,17 @@ from app.main import app
 
 @pytest.fixture
 def user():
-    return MagicMock(id=uuid.uuid4())
+    return MagicMock(id=uuid.uuid4(), credits_balance=30)
+
+
+@pytest.fixture
+def credits(monkeypatch):
+    from app.api.routes import seo as seo_routes
+
+    service = MagicMock()
+    service.reserve.return_value = True
+    monkeypatch.setattr(seo_routes, "get_credit_service", lambda: service)
+    return service
 
 
 def _client(db, user):
@@ -131,7 +141,20 @@ def test_trigger_seo_409_when_already_running(user):
     assert resp.json()["detail"]["code"] == "ANALYSIS_IN_PROGRESS"
 
 
-def test_trigger_seo_queues_task_and_returns_run_id(user, monkeypatch):
+def test_trigger_seo_402_when_credits_insufficient(user, credits):
+    credits.reserve.return_value = False
+    credits.available.return_value = 1
+    client = _client(_db(listing=_listing(), store=MagicMock(), running=None), user)
+
+    resp = client.post(f"/v1/listings/{uuid.uuid4()}/seo/analyze")
+
+    assert resp.status_code == 402
+    detail = resp.json()["detail"]
+    assert detail["code"] == "INSUFFICIENT_CREDITS"
+    assert detail["details"] == {"required": 2, "available": 1}
+
+
+def test_trigger_seo_queues_task_and_returns_run_id(user, credits, monkeypatch):
     from app.tasks import seo as seo_mod
 
     apply_async = MagicMock()
@@ -146,7 +169,11 @@ def test_trigger_seo_queues_task_and_returns_run_id(user, monkeypatch):
     assert resp.status_code == 202
     data = resp.json()["data"]
     assert data["status"] == "pending"
+    assert data["credits_reserved"] == 2
     run_id = data["run_id"]
+
+    # Credits were held atomically for this run
+    credits.reserve.assert_called_once_with(str(user.id), 2, run_id, 30)
 
     # The queued Celery task carries the run id as its task_id
     apply_async.assert_called_once()

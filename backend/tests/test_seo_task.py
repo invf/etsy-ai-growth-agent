@@ -3,6 +3,8 @@ from contextlib import contextmanager
 from decimal import Decimal
 from unittest.mock import MagicMock
 
+import pytest
+
 from app.db.models.agent_run import AgentRun
 from app.db.models.listing import Listing
 from app.db.models.seo_analysis import SeoAnalysis
@@ -72,6 +74,14 @@ def _wire_db(monkeypatch, run, listing):
     return db
 
 
+@pytest.fixture(autouse=True)
+def credits(monkeypatch):
+    service = MagicMock()
+    service.settle.return_value = 2
+    monkeypatch.setattr(seo_mod, "get_credit_service", lambda: service)
+    return service
+
+
 def test_analyze_single_persists_analysis_and_completes_run(monkeypatch):
     run, listing = _run(), _listing()
     db = _wire_db(monkeypatch, run, listing)
@@ -105,6 +115,35 @@ def test_analyze_single_persists_analysis_and_completes_run(monkeypatch):
     assert run.progress_pct == 100
     assert run.total_cost_usd == Decimal("0.054000")
     assert run.result_summary == {"overall_score": 62, "priority": "high"}
+
+
+def test_analyze_single_settles_credits_on_success(monkeypatch, credits):
+    run, listing = _run(), _listing()
+    _wire_db(monkeypatch, run, listing)
+    result = SeoAnalysisResult.model_validate(_valid_payload())
+    monkeypatch.setattr(
+        seo_mod, "analyze_listing_seo", MagicMock(return_value=(result, _usage()))
+    )
+
+    seo_mod.analyze_single(str(listing.id), str(run.id))
+
+    credits.settle.assert_called_once()
+    assert credits.settle.call_args.args[0] == str(run.id)
+    assert run.credits_used == 2
+    credits.release.assert_not_called()
+
+
+def test_analyze_single_releases_credits_on_failure(monkeypatch, credits):
+    run, listing = _run(), _listing()
+    _wire_db(monkeypatch, run, listing)
+    monkeypatch.setattr(
+        seo_mod, "analyze_listing_seo", MagicMock(side_effect=ValueError("boom"))
+    )
+
+    seo_mod.analyze_single(str(listing.id), str(run.id))
+
+    credits.release.assert_called_once_with(str(run.user_id), str(run.id))
+    credits.settle.assert_not_called()
 
 
 def test_analyze_single_marks_run_failed_on_error(monkeypatch):
