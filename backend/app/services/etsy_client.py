@@ -96,6 +96,31 @@ def get_shop_listings(
     return resp.json()
 
 
+def update_listing(
+    access_token: str, shop_id: str, etsy_listing_id: int, fields: dict
+) -> dict:
+    """Write listing changes (title/tags/description) back to Etsy.
+
+    Etsy v3 updateListing is a form-encoded PATCH; tags go as a
+    comma-separated string.
+    """
+    _throttle()
+    data = dict(fields)
+    if isinstance(data.get("tags"), list):
+        data["tags"] = ",".join(data["tags"])
+    resp = httpx.patch(
+        f"{ETSY_API_BASE}/application/shops/{shop_id}/listings/{etsy_listing_id}",
+        headers={
+            "x-api-key": settings.ETSY_CLIENT_ID,
+            "Authorization": f"Bearer {access_token}",
+        },
+        data=data,
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
 def fetch_current_shop(access_token: str) -> dict:
     """Fetch the shop belonging to the authenticated Etsy user."""
     _throttle()

@@ -3,16 +3,19 @@ import uuid
 from datetime import datetime, timezone
 from unittest.mock import MagicMock
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
 from app.api.dependencies import get_current_user
+from app.api.routes import optimizations as opt_routes
 from app.db.models.listing import Listing
 from app.db.models.optimization import ListingOptimization
 from app.db.models.seo_analysis import SeoAnalysis
 from app.db.models.store import Store
 from app.db.session import get_db
 from app.main import app
+from app.services.etsy_token_service import StoreNotConnectedError
 
 
 @pytest.fixture
@@ -262,6 +265,131 @@ def test_list_optimizations_invalid_status_rejected(user):
 
     assert resp.status_code == 422
     assert resp.json()["detail"]["code"] == "INVALID_PARAM"
+
+
+def _apply_setup(monkeypatch, opt, listing=None, update=None, token="tok"):
+    """Wire db + service mocks for the apply endpoint."""
+    listing = listing or _listing()
+    opt.listing_id = listing.id
+    store = Store(etsy_shop_id="shop1", shop_name="Shop")
+    store.id = listing.store_id
+    db = _db(
+        {
+            ListingOptimization: {"first": opt},
+            Listing: {"first": listing},
+            Store: {"first": store},
+        }
+    )
+    monkeypatch.setattr(
+        opt_routes, "get_valid_access_token", MagicMock(return_value=token)
+    )
+    monkeypatch.setattr(
+        opt_routes, "update_listing", update or MagicMock(return_value={})
+    )
+    return db, listing, store
+
+
+def test_apply_optimization_writes_to_etsy_and_updates_listing(user, monkeypatch):
+    opt = _optimization(status="approved", opt_type="tags")
+    update = MagicMock(return_value={})
+    listing = Listing(
+        store_id=uuid.uuid4(),
+        etsy_listing_id=555,
+        title="Mug",
+        description="desc",
+        tags=["mug"],
+    )
+    listing.id = uuid.uuid4()
+    db, listing, store = _apply_setup(monkeypatch, opt, listing, update)
+    client = _client(db, user)
+
+    resp = client.post(f"/v1/optimizations/{opt.id}/apply")
+
+    assert resp.status_code == 200
+    data = resp.json()["data"]
+    assert data["status"] == "applied"
+    assert data["etsy_update_status"] == "success"
+
+    update.assert_called_once_with("tok", "shop1", 555, {"tags": ["ceramic mug"]})
+    assert listing.tags == ["ceramic mug"]
+    assert listing.content_hash  # recomputed after local mirror
+    assert opt.applied_at is not None
+
+
+def test_apply_409_when_not_approved(user, monkeypatch):
+    opt = _optimization(status="pending")
+    db, _, _ = _apply_setup(monkeypatch, opt)
+    client = _client(db, user)
+
+    resp = client.post(f"/v1/optimizations/{opt.id}/apply")
+
+    assert resp.status_code == 409
+    assert resp.json()["detail"]["code"] == "NOT_APPROVED"
+
+
+def test_apply_422_when_etsy_constraints_violated(user, monkeypatch):
+    opt = _optimization(status="approved", opt_type="tags")
+    opt.new_value = json.dumps(["x" * 21])
+    db, _, _ = _apply_setup(monkeypatch, opt)
+    client = _client(db, user)
+
+    resp = client.post(f"/v1/optimizations/{opt.id}/apply")
+
+    assert resp.status_code == 422
+    detail = resp.json()["detail"]
+    assert detail["code"] == "ETSY_VALIDATION_FAILED"
+    assert detail["details"]["errors"]
+    # Nothing was sent to Etsy
+    opt_routes.update_listing.assert_not_called()
+
+
+def test_apply_424_when_etsy_rejects(user, monkeypatch):
+    request = httpx.Request("PATCH", "https://openapi.etsy.com/x")
+    error = httpx.HTTPStatusError(
+        "bad", request=request, response=httpx.Response(400, request=request)
+    )
+    opt = _optimization(status="approved", opt_type="tags")
+    db, _, _ = _apply_setup(monkeypatch, opt, update=MagicMock(side_effect=error))
+    client = _client(db, user)
+
+    resp = client.post(f"/v1/optimizations/{opt.id}/apply")
+
+    assert resp.status_code == 424
+    assert resp.json()["detail"]["code"] == "ETSY_UPDATE_FAILED"
+    assert opt.status == "failed"
+    assert opt.etsy_update_status == "failed"
+    db.commit.assert_called()  # failure state survives the rollback on raise
+
+
+def test_apply_503_on_etsy_timeout(user, monkeypatch):
+    opt = _optimization(status="approved", opt_type="tags")
+    db, _, _ = _apply_setup(
+        monkeypatch, opt, update=MagicMock(side_effect=httpx.ReadTimeout("slow"))
+    )
+    client = _client(db, user)
+
+    resp = client.post(f"/v1/optimizations/{opt.id}/apply")
+
+    assert resp.status_code == 503
+    assert resp.json()["detail"]["code"] == "ETSY_UNAVAILABLE"
+    assert opt.status == "failed"
+
+
+def test_apply_409_when_store_disconnected(user, monkeypatch):
+    opt = _optimization(status="approved", opt_type="tags")
+    db, _, _ = _apply_setup(monkeypatch, opt)
+    monkeypatch.setattr(
+        opt_routes,
+        "get_valid_access_token",
+        MagicMock(side_effect=StoreNotConnectedError("gone")),
+    )
+    client = _client(db, user)
+
+    resp = client.post(f"/v1/optimizations/{opt.id}/apply")
+
+    assert resp.status_code == 409
+    assert resp.json()["detail"]["code"] == "STORE_NOT_CONNECTED"
+    assert opt.status == "failed"
 
 
 def test_list_optimizations_returns_serialized_rows(user):
