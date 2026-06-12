@@ -1,0 +1,156 @@
+import uuid
+from contextlib import contextmanager
+from decimal import Decimal
+from unittest.mock import MagicMock
+
+from app.db.models.agent_run import AgentRun
+from app.db.models.listing import Listing
+from app.db.models.seo_analysis import SeoAnalysis
+from app.schemas.seo import SeoAnalysisResult
+from app.services.ai_service import AIRefusalError, AIUsage
+from app.tasks import seo as seo_mod
+from tests.test_seo_analyzer import _valid_payload
+
+
+def _usage() -> AIUsage:
+    return AIUsage(
+        model="claude-fable-5",
+        input_tokens=1200,
+        output_tokens=800,
+        cache_read_tokens=2000,
+        cache_write_tokens=0,
+        cost_usd=Decimal("0.054000"),
+    )
+
+
+def _run() -> AgentRun:
+    return AgentRun(
+        id=uuid.uuid4(),
+        store_id=uuid.uuid4(),
+        user_id=uuid.uuid4(),
+        run_type="seo_analysis",
+        status="pending",
+        progress_pct=0,
+        total_input_tokens=0,
+        total_output_tokens=0,
+        total_cache_read_tokens=0,
+        total_cost_usd=Decimal(0),
+    )
+
+
+def _listing() -> Listing:
+    listing = Listing(
+        store_id=uuid.uuid4(),
+        etsy_listing_id=111,
+        title="Handmade mug",
+        tags=["mug", "ceramic"],
+        views_count=42,
+        favorites_count=7,
+    )
+    listing.id = uuid.uuid4()
+    return listing
+
+
+def _wire_db(monkeypatch, run, listing):
+    db = MagicMock()
+
+    def query(model):
+        q = MagicMock()
+        if model is AgentRun:
+            q.filter_by.return_value.first.return_value = run
+        elif model is Listing:
+            q.filter_by.return_value.first.return_value = listing
+        return q
+
+    db.query.side_effect = query
+
+    @contextmanager
+    def fake_session():
+        yield db
+
+    monkeypatch.setattr(seo_mod, "get_db_session", fake_session)
+    return db
+
+
+def test_analyze_single_persists_analysis_and_completes_run(monkeypatch):
+    run, listing = _run(), _listing()
+    db = _wire_db(monkeypatch, run, listing)
+    result = SeoAnalysisResult.model_validate(_valid_payload())
+    monkeypatch.setattr(
+        seo_mod, "analyze_listing_seo", MagicMock(return_value=(result, _usage()))
+    )
+
+    outcome = seo_mod.analyze_single(str(listing.id), str(run.id))
+
+    assert outcome["status"] == "ok"
+    assert outcome["overall_score"] == 62
+
+    added = [call.args[0] for call in db.add.call_args_list]
+    analysis = next(a for a in added if isinstance(a, SeoAnalysis))
+    assert analysis.listing_id == listing.id
+    assert analysis.overall_score == 62
+    assert analysis.current_title == "Handmade mug"
+    assert analysis.optimized_tags == result.tags_analysis.full_optimized_tag_set
+    assert analysis.model_used == "claude-fable-5"
+    assert analysis.cost_usd == Decimal("0.054000")
+
+    log = next(a for a in added if isinstance(a, seo_mod.AgentRunLog))
+    assert log.task_name == "seo_analysis"
+    assert log.input_tokens == 1200
+
+    assert listing.seo_score == 62
+    assert listing.seo_scored_at is not None
+
+    assert run.status == "completed"
+    assert run.progress_pct == 100
+    assert run.total_cost_usd == Decimal("0.054000")
+    assert run.result_summary == {"overall_score": 62, "priority": "high"}
+
+
+def test_analyze_single_marks_run_failed_on_error(monkeypatch):
+    run, listing = _run(), _listing()
+    _wire_db(monkeypatch, run, listing)
+    monkeypatch.setattr(
+        seo_mod, "analyze_listing_seo", MagicMock(side_effect=ValueError("boom"))
+    )
+
+    outcome = seo_mod.analyze_single(str(listing.id), str(run.id))
+
+    assert outcome["status"] == "failed"
+    assert run.status == "failed"
+    assert "boom" in run.error_message
+
+
+def test_analyze_single_marks_run_failed_on_refusal(monkeypatch):
+    run, listing = _run(), _listing()
+    _wire_db(monkeypatch, run, listing)
+    monkeypatch.setattr(
+        seo_mod,
+        "analyze_listing_seo",
+        MagicMock(side_effect=AIRefusalError("cyber")),
+    )
+
+    outcome = seo_mod.analyze_single(str(listing.id), str(run.id))
+
+    assert outcome["status"] == "failed"
+    assert run.status == "failed"
+    assert "refused" in run.error_message.lower()
+
+
+def test_analyze_single_skips_when_run_missing(monkeypatch):
+    _wire_db(monkeypatch, run=None, listing=_listing())
+
+    outcome = seo_mod.analyze_single(str(uuid.uuid4()), str(uuid.uuid4()))
+
+    assert outcome == {"status": "skipped", "reason": "run not found"}
+
+
+def test_analyze_single_fails_run_when_listing_missing(monkeypatch):
+    run = _run()
+    _wire_db(monkeypatch, run=run, listing=None)
+
+    outcome = seo_mod.analyze_single(str(uuid.uuid4()), str(run.id))
+
+    assert outcome["status"] == "failed"
+    assert run.status == "failed"
+    assert "Listing not found" in run.error_message

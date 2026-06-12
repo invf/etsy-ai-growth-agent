@@ -6,7 +6,7 @@ celery_app = Celery(
     "etsy_agent",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["app.tasks.health", "app.tasks.sync"],
+    include=["app.tasks.health", "app.tasks.seo", "app.tasks.sync"],
 )
 
 celery_app.conf.update(
