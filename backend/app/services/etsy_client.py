@@ -15,7 +15,7 @@ OAUTH_SCOPES = "listings_r listings_w shops_r shops_w transactions_r"
 
 
 def _throttle() -> None:
-    """Take one token from the app-wide Etsy bucket (~10 req/s) before any call."""
+    """Take one token from the app-wide Etsy bucket (ETSY_RATE_LIMIT_QPS) before any call."""
     get_etsy_rate_limiter().acquire()
 
 

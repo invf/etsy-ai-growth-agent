@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     ETSY_CLIENT_ID: str = ""
     ETSY_CLIENT_SECRET: str = ""
     ETSY_REDIRECT_URI: str = ""
+    # Etsy personal/dev keys are capped at 5 QPS; bump to 10 after commercial approval.
+    ETSY_RATE_LIMIT_QPS: float = 5
     PADDLE_API_KEY: str = ""
     PADDLE_CLIENT_TOKEN: str = ""
     PADDLE_WEBHOOK_SECRET: str = ""

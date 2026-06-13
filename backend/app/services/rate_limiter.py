@@ -74,7 +74,8 @@ _etsy_limiter: TokenBucketRateLimiter | None = None
 def get_etsy_rate_limiter() -> TokenBucketRateLimiter:
     global _etsy_limiter
     if _etsy_limiter is None:
+        qps = settings.ETSY_RATE_LIMIT_QPS
         _etsy_limiter = TokenBucketRateLimiter(
-            redis.from_url(settings.REDIS_URL), rate=10, capacity=10
+            redis.from_url(settings.REDIS_URL), rate=qps, capacity=qps
         )
     return _etsy_limiter
