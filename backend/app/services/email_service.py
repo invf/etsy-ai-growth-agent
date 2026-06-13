@@ -40,6 +40,37 @@ def send_email(to_email: str, subject: str, html: str) -> bool:
         return False
 
 
+def daily_digest_email_html(name: str | None, digest: dict, dashboard_url: str) -> str:
+    greeting = f"Hi {name}," if name else "Hi,"
+    headline = digest.get("headline") or "Your daily SEO review is ready"
+    summary = digest.get("summary") or ""
+    actions = digest.get("recommended_actions") or []
+    actions_html = "".join(
+        f'<li style="color: #3f3f46; margin: 4px 0;">{a}</li>' for a in actions[:5]
+    )
+    actions_block = (
+        f'<ul style="padding-left: 18px;">{actions_html}</ul>' if actions_html else ""
+    )
+    return f"""\
+<div style="font-family: -apple-system, Segoe UI, sans-serif; max-width: 480px; margin: 0 auto;">
+  <h2 style="color: #18181b;">{headline}</h2>
+  <p style="color: #3f3f46;">{greeting}</p>
+  <p style="color: #3f3f46;">{summary}</p>
+  {actions_block}
+  <p style="margin: 24px 0;">
+    <a href="{dashboard_url}"
+       style="background: #4f46e5; color: #fff; padding: 10px 20px;
+              border-radius: 8px; text-decoration: none;">
+      View today's recommendations
+    </a>
+  </p>
+  <p style="color: #a1a1aa; font-size: 12px;">
+    Etsy AI Growth Agent &middot; You receive this because email
+    notifications are enabled in your settings.
+  </p>
+</div>"""
+
+
 def low_credits_email_html(name: str | None, available: int, top_up_url: str) -> str:
     greeting = f"Hi {name}," if name else "Hi,"
     return f"""\
