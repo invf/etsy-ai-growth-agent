@@ -51,10 +51,9 @@ services:
     plan: free               # sleeps after 15m idle (~50s cold start) — fine pre-launch
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    # free plan has no preDeployCommand → run migrations at startup (idempotent).
-    # Render already wraps dockerCommand in `sh -c`, so pass the raw command
-    # (no extra `sh -c "..."`, which double-wraps and breaks with exit 127).
-    dockerCommand: alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    # No dockerCommand here: the backend Dockerfile's shell-form CMD runs
+    # `alembic upgrade head && uvicorn ...`. Render mangles `&&` in dockerCommand
+    # (exit 127), so the chaining must live in the Dockerfile, not here.
     healthCheckPath: /health
     envVars:
       - key: DATABASE_URL

@@ -11,4 +11,7 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Shell-form CMD so `&&` runs via /bin/sh and ${PORT} (set by Render) expands at
+# runtime. Migrations run at startup (idempotent) since the free web plan has no
+# preDeployCommand. The worker service overrides this via its own dockerCommand.
+CMD alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
