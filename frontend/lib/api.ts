@@ -1,5 +1,6 @@
 import type {
   AgentRunStatus,
+  AppNotification,
   AuthResponse,
   ListingDetail,
   ListingsMeta,
@@ -150,5 +151,17 @@ export const api = {
   },
   billing: {
     plans: () => apiFetch<SubscriptionPlan[]>('/billing/plans'),
+  },
+  notifications: {
+    list: (token: string, unreadOnly = false) =>
+      apiFetch<AppNotification[], { unread_count: number }>(
+        `/notifications${unreadOnly ? '?unread_only=true' : ''}`,
+        { token }
+      ),
+    markRead: (token: string, id: string) =>
+      apiFetch<AppNotification>(`/notifications/${id}/read`, {
+        method: 'POST',
+        token,
+      }),
   },
 }

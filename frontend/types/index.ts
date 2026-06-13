@@ -12,6 +12,18 @@ export interface UserProfile {
   store_count: number
 }
 
+export interface AppNotification {
+  id: string
+  type: string
+  priority: string
+  title: string
+  message: string
+  data: Record<string, unknown> | null
+  action_url: string | null
+  is_read: boolean
+  created_at: string
+}
+
 export interface AuthResponse {
   user: UserProfile
   access_token: string

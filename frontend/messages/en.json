@@ -254,5 +254,9 @@
     "common": {
       "continue": "Continue"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet"
   }
 }

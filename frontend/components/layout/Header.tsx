@@ -3,6 +3,7 @@ import { Sparkles } from 'lucide-react'
 import { auth } from '@/lib/auth'
 import { Link } from '@/i18n/navigation'
 import LanguageSwitcher from '@/components/layout/LanguageSwitcher'
+import NotificationBell from '@/components/layout/NotificationBell'
 import SignOutButton from '@/components/layout/SignOutButton'
 
 export default async function Header() {
@@ -39,6 +40,7 @@ export default async function Header() {
               >
                 {tNav('stores')}
               </Link>
+              <NotificationBell />
               <SignOutButton />
             </>
           ) : (
