@@ -1,0 +1,233 @@
+# Render Blueprint for Etsy AI Growth Agent
+# Docs: https://render.com/docs/blueprint-spec
+#
+# How to deploy:
+#   1. Render Dashboard → New → Blueprint → pick repo invf/etsy-ai-growth-agent.
+#   2. Render reads this file and proposes: 1 Postgres, 1 Key Value (Redis),
+#      and 4 services (backend API, Celery worker, Celery beat, frontend).
+#   3. Fill the secrets in the "etsy-agent-secrets" env group (marked sync:false
+#      below) — nothing secret is committed to git.
+#   4. After the first deploy, copy the generated *.onrender.com URLs into the
+#      three URL vars marked "SET AFTER FIRST DEPLOY", then redeploy.
+#
+# NOTE: Celery `worker` services and `preDeployCommand` (DB migrations) require a
+# paid instance type on Render — `free` is not available for those. Postgres and
+# Key Value can stay on `free` for an MVP (free Postgres expires after 90 days).
+
+databases:
+  - name: etsy-agent-db
+    databaseName: etsy_agent
+    user: etsy_agent
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: "16"
+
+services:
+  # ---------------------------------------------------------------------------
+  # Redis / Key Value — Celery broker + result backend, rate limiter, credits,
+  # redbeat schedule. All share db 0 (distinct key prefixes, no collisions).
+  # ---------------------------------------------------------------------------
+  - type: redis
+    name: etsy-agent-redis
+    plan: free
+    region: frankfurt
+    ipAllowList: []            # internal-only (reachable from other Render services)
+    maxmemoryPolicy: allkeys-lru
+
+  # ---------------------------------------------------------------------------
+  # Backend API (FastAPI / uvicorn). Runs Alembic migrations before each deploy.
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: etsy-agent-backend
+    runtime: docker
+    region: frankfurt
+    plan: starter            # preDeployCommand needs a non-free plan
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: sh -c "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    preDeployCommand: alembic upgrade head
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: etsy-agent-db
+          property: connectionString
+      - key: DATABASE_URL_SYNC
+        fromDatabase:
+          name: etsy-agent-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: APP_ENV
+        value: production
+      - key: AI_MODEL_PRIMARY
+        value: claude-fable-5
+      - key: AI_MODEL_FAST
+        value: claude-haiku-4-5
+      # SET AFTER FIRST DEPLOY → https://etsy-agent-frontend.onrender.com
+      - key: FRONTEND_URL
+        sync: false
+      # SET AFTER FIRST DEPLOY → https://etsy-agent-backend.onrender.com/v1/stores/connect/callback
+      - key: ETSY_REDIRECT_URI
+        sync: false
+      - fromGroup: etsy-agent-secrets
+
+  # ---------------------------------------------------------------------------
+  # Celery worker — runs SEO analysis, sync, daily-agent fan-out tasks.
+  # ---------------------------------------------------------------------------
+  - type: worker
+    name: etsy-agent-worker
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: etsy-agent-db
+          property: connectionString
+      - key: DATABASE_URL_SYNC
+        fromDatabase:
+          name: etsy-agent-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: APP_ENV
+        value: production
+      - key: AI_MODEL_PRIMARY
+        value: claude-fable-5
+      - key: AI_MODEL_FAST
+        value: claude-haiku-4-5
+      - fromGroup: etsy-agent-secrets
+
+  # ---------------------------------------------------------------------------
+  # Celery beat — schedules the daily agent fan-out (07:00 UTC) via RedBeat.
+  # ---------------------------------------------------------------------------
+  - type: worker
+    name: etsy-agent-beat
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    dockerCommand: celery -A app.celery_app beat -S redbeat.RedBeatScheduler --loglevel=info
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: etsy-agent-db
+          property: connectionString
+      - key: DATABASE_URL_SYNC
+        fromDatabase:
+          name: etsy-agent-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          name: etsy-agent-redis
+          type: redis
+          property: connectionString
+      - key: APP_ENV
+        value: production
+      - fromGroup: etsy-agent-secrets
+
+  # ---------------------------------------------------------------------------
+  # Frontend (Next.js). NEXT_PUBLIC_* are baked at build time, so set the API
+  # URL before/after first deploy and redeploy to pick it up.
+  # ---------------------------------------------------------------------------
+  - type: web
+    name: etsy-agent-frontend
+    runtime: docker
+    region: frankfurt
+    plan: starter
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # SET AFTER FIRST DEPLOY → https://etsy-agent-backend.onrender.com/v1
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      # SET AFTER FIRST DEPLOY → https://etsy-agent-frontend.onrender.com
+      - key: NEXTAUTH_URL
+        sync: false
+      - key: NEXT_PUBLIC_PADDLE_ENV
+        value: sandbox
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
+        sync: false
+
+# -----------------------------------------------------------------------------
+# Shared secret env group — fill these in the Render dashboard after the
+# Blueprint is created (Render → Env Groups → etsy-agent-secrets). They are
+# attached to the backend, worker, and beat services.
+# -----------------------------------------------------------------------------
+envVarGroups:
+  - name: etsy-agent-secrets
+    envVars:
+      - key: SECRET_KEY
+        sync: false                 # JWT signing — `openssl rand -hex 32`
+      - key: ETSY_TOKEN_ENCRYPTION_KEY
+        sync: false                 # MUST be 64 hex chars — `openssl rand -hex 32`
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: VOYAGE_API_KEY
+        sync: false
+      - key: ETSY_CLIENT_ID
+        sync: false
+      - key: ETSY_CLIENT_SECRET
+        sync: false
+      - key: PADDLE_API_KEY
+        sync: false
+      - key: PADDLE_CLIENT_TOKEN
+        sync: false
+      - key: PADDLE_WEBHOOK_SECRET
+        sync: false
+      - key: PADDLE_ENVIRONMENT
+        value: sandbox
+      - key: SENDGRID_API_KEY
+        sync: false
+      - key: FROM_EMAIL
+        value: hello@etsyagent.com
+      - key: SENTRY_DSN
+        sync: false
