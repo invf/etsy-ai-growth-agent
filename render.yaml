@@ -4,15 +4,20 @@
 # How to deploy:
 #   1. Render Dashboard → New → Blueprint → pick repo invf/etsy-ai-growth-agent.
 #   2. Render reads this file and proposes: 1 Postgres, 1 Key Value (Redis),
-#      and 4 services (backend API, Celery worker, Celery beat, frontend).
+#      and 3 services (backend API, Celery worker+beat, frontend).
 #   3. Fill the secrets in the "etsy-agent-secrets" env group (marked sync:false
 #      below) — nothing secret is committed to git.
 #   4. After the first deploy, copy the generated *.onrender.com URLs into the
 #      three URL vars marked "SET AFTER FIRST DEPLOY", then redeploy.
 #
-# NOTE: Celery `worker` services and `preDeployCommand` (DB migrations) require a
-# paid instance type on Render — `free` is not available for those. Postgres and
-# Key Value can stay on `free` for an MVP (free Postgres expires after 90 days).
+# COST ($7/mo MVP setup):
+#   - backend + frontend run on `free` (they sleep after 15m idle → ~50s cold
+#     start; fine pre-launch). free web has no preDeployCommand, so the backend
+#     runs `alembic upgrade head` at startup (idempotent).
+#   - worker + beat are combined into ONE Starter worker via `-B` (embedded
+#     beat). Render has no free plan for `type: worker`, so this is the one
+#     paid service ($7/mo). Split them back out for higher throughput later.
+#   - Postgres + Key Value stay `free` (free Postgres expires after 90 days).
 
 databases:
   - name: etsy-agent-db
@@ -41,12 +46,12 @@ services:
     name: etsy-agent-backend
     runtime: docker
     region: frankfurt
-    plan: starter            # preDeployCommand needs a non-free plan
+    plan: free               # sleeps after 15m idle (~50s cold start) — fine pre-launch
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    dockerCommand: sh -c "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    # free plan has no preDeployCommand → run migrations at startup (idempotent)
+    dockerCommand: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT"
     healthCheckPath: /health
-    preDeployCommand: alembic upgrade head
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -86,7 +91,9 @@ services:
       - fromGroup: etsy-agent-secrets
 
   # ---------------------------------------------------------------------------
-  # Celery worker — runs SEO analysis, sync, daily-agent fan-out tasks.
+  # Celery worker + beat (combined) — runs SEO analysis, sync, daily-agent
+  # fan-out tasks AND schedules the daily fan-out at 07:00 UTC via embedded
+  # beat (`-B`) with the RedBeat scheduler. The only paid service ($7/mo).
   # ---------------------------------------------------------------------------
   - type: worker
     name: etsy-agent-worker
@@ -95,7 +102,7 @@ services:
     plan: starter
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
-    dockerCommand: celery -A app.celery_app worker --loglevel=info --concurrency=2
+    dockerCommand: celery -A app.celery_app worker -B -S redbeat.RedBeatScheduler --loglevel=info --concurrency=2
     envVars:
       - key: DATABASE_URL
         fromDatabase:
@@ -129,45 +136,6 @@ services:
       - fromGroup: etsy-agent-secrets
 
   # ---------------------------------------------------------------------------
-  # Celery beat — schedules the daily agent fan-out (07:00 UTC) via RedBeat.
-  # ---------------------------------------------------------------------------
-  - type: worker
-    name: etsy-agent-beat
-    runtime: docker
-    region: frankfurt
-    plan: starter
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    dockerCommand: celery -A app.celery_app beat -S redbeat.RedBeatScheduler --loglevel=info
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: etsy-agent-db
-          property: connectionString
-      - key: DATABASE_URL_SYNC
-        fromDatabase:
-          name: etsy-agent-db
-          property: connectionString
-      - key: REDIS_URL
-        fromService:
-          name: etsy-agent-redis
-          type: redis
-          property: connectionString
-      - key: CELERY_BROKER_URL
-        fromService:
-          name: etsy-agent-redis
-          type: redis
-          property: connectionString
-      - key: CELERY_RESULT_BACKEND
-        fromService:
-          name: etsy-agent-redis
-          type: redis
-          property: connectionString
-      - key: APP_ENV
-        value: production
-      - fromGroup: etsy-agent-secrets
-
-  # ---------------------------------------------------------------------------
   # Frontend (Next.js). NEXT_PUBLIC_* are baked at build time, so set the API
   # URL before/after first deploy and redeploy to pick it up.
   # ---------------------------------------------------------------------------
@@ -175,7 +143,7 @@ services:
     name: etsy-agent-frontend
     runtime: docker
     region: frankfurt
-    plan: starter
+    plan: free
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./frontend
     healthCheckPath: /
