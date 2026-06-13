@@ -223,5 +223,36 @@
       "api_access": "API access",
       "white_label": "White label"
     }
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "Welcome",
+      "connect": "Connect store",
+      "analyze": "First analysis"
+    },
+    "welcome": {
+      "title": "Welcome to Etsy AI Growth Agent",
+      "body": "Your AI agent analyzes listings, optimizes SEO, and finds growth opportunities — automatically. Let's set up your store in a couple of minutes.",
+      "cta": "Get started"
+    },
+    "connect": {
+      "title": "Connect your Etsy store",
+      "body": "Securely connect your Etsy shop so the agent can read your listings and suggest improvements.",
+      "cta": "Connect Etsy Store",
+      "redirecting": "Redirecting…",
+      "done": "Your store is connected.",
+      "skip": "I'll do this later",
+      "limit": "You've reached your store limit for this plan.",
+      "error": "Couldn't start the connection. Please try again."
+    },
+    "analyze": {
+      "title": "Run your first analysis",
+      "body": "Open a listing and run an AI SEO analysis to get your first recommendations.",
+      "cta": "Go to my listings",
+      "finish": "Finish — go to dashboard"
+    },
+    "common": {
+      "continue": "Continue"
+    }
   }
 }

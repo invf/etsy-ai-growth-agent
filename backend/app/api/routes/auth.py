@@ -18,6 +18,7 @@ from app.db.session import get_db
 from app.schemas.auth import (
     AuthResponse,
     LoginRequest,
+    OnboardingUpdateRequest,
     RefreshRequest,
     RegisterRequest,
     UserOut,
@@ -38,6 +39,7 @@ def _user_to_out(user: User) -> UserOut:
         credits_available=user.credits_balance - user.credits_reserved,
         trial_ends_at=user.trial_ends_at.isoformat() if user.trial_ends_at else None,
         onboarding_completed=user.onboarding_completed,
+        onboarding_step=user.onboarding_step,
         store_count=0,
     )
 
@@ -161,4 +163,17 @@ def logout(
 
 @router.get("/me", response_model=dict)
 def me(current_user: User = Depends(get_current_user)):
+    return {"data": _user_to_out(current_user).model_dump()}
+
+
+@router.post("/onboarding", response_model=dict)
+def update_onboarding(
+    body: OnboardingUpdateRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    current_user.onboarding_step = body.step
+    if body.completed:
+        current_user.onboarding_completed = True
+    db.add(current_user)
     return {"data": _user_to_out(current_user).model_dump()}

@@ -61,6 +61,12 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data),
       }),
+    updateOnboarding: (token: string, step: number, completed = false) =>
+      apiFetch<UserProfile>('/auth/onboarding', {
+        method: 'POST',
+        token,
+        body: JSON.stringify({ step, completed }),
+      }),
   },
   stores: {
     list: (token: string) => apiFetch<Store[]>('/stores', { token }),

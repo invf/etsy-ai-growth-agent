@@ -223,5 +223,36 @@
       "api_access": "Dostęp do API",
       "white_label": "White label"
     }
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "Powitanie",
+      "connect": "Połącz sklep",
+      "analyze": "Pierwsza analiza"
+    },
+    "welcome": {
+      "title": "Witaj w Etsy AI Growth Agent",
+      "body": "Twój agent AI analizuje oferty, optymalizuje SEO i znajduje możliwości wzrostu — automatycznie. Skonfigurujmy Twój sklep w kilka minut.",
+      "cta": "Zaczynamy"
+    },
+    "connect": {
+      "title": "Połącz swój sklep Etsy",
+      "body": "Bezpiecznie połącz sklep Etsy, aby agent mógł czytać Twoje oferty i proponować ulepszenia.",
+      "cta": "Połącz sklep Etsy",
+      "redirecting": "Przekierowywanie…",
+      "done": "Twój sklep jest połączony.",
+      "skip": "Zrobię to później",
+      "limit": "Osiągnięto limit sklepów dla tego planu.",
+      "error": "Nie udało się rozpocząć połączenia. Spróbuj ponownie."
+    },
+    "analyze": {
+      "title": "Uruchom pierwszą analizę",
+      "body": "Otwórz ofertę i uruchom analizę AI SEO, aby uzyskać pierwsze rekomendacje.",
+      "cta": "Przejdź do ofert",
+      "finish": "Zakończ — przejdź do panelu"
+    },
+    "common": {
+      "continue": "Kontynuuj"
+    }
   }
 }

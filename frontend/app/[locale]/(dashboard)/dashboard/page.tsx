@@ -31,6 +31,11 @@ export default async function DashboardPage({
     redirect(`/${locale}/login`)
   }
 
+  // New users go through the onboarding wizard first.
+  if (user && !user.onboarding_completed) {
+    redirect(`/${locale}/onboarding`)
+  }
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-2xl font-semibold text-zinc-900">

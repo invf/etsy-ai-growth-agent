@@ -8,6 +8,7 @@ export interface UserProfile {
   credits_available: number
   trial_ends_at: string | null
   onboarding_completed: boolean
+  onboarding_step: number
   store_count: number
 }
 

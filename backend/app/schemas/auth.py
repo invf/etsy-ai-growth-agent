@@ -1,6 +1,6 @@
 import re
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class RegisterRequest(BaseModel):
@@ -44,6 +44,7 @@ class UserOut(BaseModel):
     credits_available: int
     trial_ends_at: str | None
     onboarding_completed: bool
+    onboarding_step: int = 0
     store_count: int = 0
 
     model_config = {"from_attributes": True}
@@ -58,3 +59,11 @@ class AuthResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     refresh_token: str
+
+
+class OnboardingUpdateRequest(BaseModel):
+    """Advance the onboarding wizard. `step` is the step the user has reached;
+    `completed` marks the whole flow as finished (e.g. on skip or final step)."""
+
+    step: int = Field(ge=0, le=10)
+    completed: bool = False
