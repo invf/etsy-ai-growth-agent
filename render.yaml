@@ -4,20 +4,22 @@
 # How to deploy:
 #   1. Render Dashboard → New → Blueprint → pick repo invf/etsy-ai-growth-agent.
 #   2. Render reads this file and proposes: 1 Postgres, 1 Key Value (Redis),
-#      and 3 services (backend API, Celery worker+beat, frontend).
+#      and 2 services (backend API, Celery worker+beat). The frontend lives on
+#      Vercel — see the note further down.
 #   3. Fill the secrets in the "etsy-agent-secrets" env group (marked sync:false
 #      below) — nothing secret is committed to git.
-#   4. After the first deploy, copy the generated *.onrender.com URLs into the
-#      three URL vars marked "SET AFTER FIRST DEPLOY", then redeploy.
+#   4. After the first deploy, set FRONTEND_URL (Vercel URL) and ETSY_REDIRECT_URI
+#      on the backend, then redeploy.
 #
 # COST ($7/mo MVP setup):
-#   - backend + frontend run on `free` (they sleep after 15m idle → ~50s cold
-#     start; fine pre-launch). free web has no preDeployCommand, so the backend
-#     runs `alembic upgrade head` at startup (idempotent).
+#   - backend runs on `free` (sleeps after 15m idle → ~50s cold start; fine
+#     pre-launch). free web has no preDeployCommand, so the backend runs
+#     `alembic upgrade head` at startup (idempotent).
 #   - worker + beat are combined into ONE Starter worker via `-B` (embedded
 #     beat). Render has no free plan for `type: worker`, so this is the one
 #     paid service ($7/mo). Split them back out for higher throughput later.
 #   - Postgres + Key Value stay `free` (free Postgres expires after 90 days).
+#   - frontend is on Vercel (Hobby, free, no cold-start sleep).
 
 databases:
   - name: etsy-agent-db
@@ -82,7 +84,7 @@ services:
         value: claude-fable-5
       - key: AI_MODEL_FAST
         value: claude-haiku-4-5
-      # SET AFTER FIRST DEPLOY → https://etsy-agent-frontend.onrender.com
+      # SET AFTER FIRST DEPLOY → your Vercel URL, e.g. https://etsy-ai-growth-agent.vercel.app
       - key: FRONTEND_URL
         sync: false
       # SET AFTER FIRST DEPLOY → https://etsy-agent-backend.onrender.com/v1/stores/connect/callback
@@ -135,40 +137,19 @@ services:
         value: claude-haiku-4-5
       - fromGroup: etsy-agent-secrets
 
-  # ---------------------------------------------------------------------------
-  # Frontend (Next.js). NEXT_PUBLIC_* are baked at build time, so set the API
-  # URL before/after first deploy and redeploy to pick it up.
-  # ---------------------------------------------------------------------------
-  - type: web
-    name: etsy-agent-frontend
-    runtime: docker
-    region: frankfurt
-    plan: free
-    dockerfilePath: ./frontend/Dockerfile
-    dockerContext: ./frontend
-    healthCheckPath: /
-    envVars:
-      - key: NODE_ENV
-        value: production
-      # SET AFTER FIRST DEPLOY → https://etsy-agent-backend.onrender.com/v1
-      - key: NEXT_PUBLIC_API_URL
-        sync: false
-      # SET AFTER FIRST DEPLOY → https://etsy-agent-frontend.onrender.com
-      - key: NEXTAUTH_URL
-        sync: false
-      - key: NEXT_PUBLIC_PADDLE_ENV
-        value: sandbox
-      - key: AUTH_SECRET
-        generateValue: true
-      - key: NEXTAUTH_SECRET
-        generateValue: true
-      - key: NEXT_PUBLIC_PADDLE_CLIENT_TOKEN
-        sync: false
+  # NOTE: the frontend (Next.js) is deployed separately on Vercel, not Render.
+  # Set its env vars in the Vercel dashboard:
+  #   NEXT_PUBLIC_API_URL=https://etsy-agent-backend.onrender.com/v1
+  #   NEXTAUTH_URL=https://<your-app>.vercel.app
+  #   AUTH_SECRET / NEXTAUTH_SECRET=<openssl rand -hex 32>
+  #   NEXT_PUBLIC_PADDLE_ENV=sandbox
+  #   NEXT_PUBLIC_PADDLE_CLIENT_TOKEN=<paddle client token>
+  # Then set FRONTEND_URL on the backend (above) to the Vercel URL for CORS.
 
 # -----------------------------------------------------------------------------
 # Shared secret env group — fill these in the Render dashboard after the
 # Blueprint is created (Render → Env Groups → etsy-agent-secrets). They are
-# attached to the backend, worker, and beat services.
+# attached to the backend and worker services.
 # -----------------------------------------------------------------------------
 envVarGroups:
   - name: etsy-agent-secrets
