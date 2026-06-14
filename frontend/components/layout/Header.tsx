@@ -19,12 +19,8 @@ export default async function Header() {
           {t('appName')}
         </Link>
         <div className="flex items-center gap-3">
-          <Link
-            href="/pricing"
-            className="text-sm font-medium text-zinc-600 hover:text-zinc-900"
-          >
-            {tNav('pricing')}
-          </Link>
+          {/* Pricing link hidden during Etsy API review (single-shop use case).
+              Restore by reverting the `hide-pricing-for-etsy-review` branch. */}
           <LanguageSwitcher />
           {session ? (
             <>

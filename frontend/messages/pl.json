@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Etsy AI Growth Agent",
+    "appName": "AI Listing Optimizer",
     "loading": "Ładowanie...",
     "error": "Coś poszło nie tak. Spróbuj ponownie."
   },
@@ -231,7 +231,7 @@
       "analyze": "Pierwsza analiza"
     },
     "welcome": {
-      "title": "Witaj w Etsy AI Growth Agent",
+      "title": "Witaj w AI Listing Optimizer",
       "body": "Twój agent AI analizuje oferty, optymalizuje SEO i znajduje możliwości wzrostu — automatycznie. Skonfigurujmy Twój sklep w kilka minut.",
       "cta": "Zaczynamy"
     },

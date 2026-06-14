@@ -1,7 +1,14 @@
+import { notFound } from 'next/navigation'
 import { getTranslations, setRequestLocale } from 'next-intl/server'
 import { api } from '@/lib/api'
 import type { SubscriptionPlan } from '@/types'
 import PricingTiers from '@/components/billing/PricingTiers'
+
+// Public pricing is hidden during the Etsy API review so the app presents a
+// single-shop use case (not a third-party SaaS). The billing infrastructure
+// stays intact; only the public entry point is gated. Restore by reverting
+// the `hide-pricing-for-etsy-review` branch.
+const PRICING_HIDDEN = true
 
 // Mirrors the migration seed — used when the API is unreachable (e.g. at
 // build time) so the page always renders
@@ -60,6 +67,7 @@ export default async function PricingPage({
   params: { locale: string }
 }) {
   setRequestLocale(locale)
+  if (PRICING_HIDDEN) notFound()
   const t = await getTranslations('pricing')
 
   let plans = FALLBACK_PLANS

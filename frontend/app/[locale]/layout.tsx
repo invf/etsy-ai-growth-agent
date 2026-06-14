@@ -11,8 +11,8 @@ import '../globals.css'
 const inter = Inter({ subsets: ['latin', 'cyrillic', 'latin-ext'] })
 
 export const metadata: Metadata = {
-  title: 'Etsy AI Growth Agent',
-  description: 'AI-powered growth agent for Etsy sellers',
+  title: 'AI Listing Optimizer',
+  description: 'AI-powered SEO and listing optimizer for your Etsy shop',
 }
 
 export function generateStaticParams() {
