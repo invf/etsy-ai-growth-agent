@@ -6,7 +6,6 @@ import { api } from '@/lib/api'
 import type { UserProfile } from '@/types'
 import { Link } from '@/i18n/navigation'
 import { buttonVariants } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default async function DashboardPage({
   params: { locale },
@@ -43,46 +42,9 @@ export default async function DashboardPage({
       </h1>
       <p className="mt-1 text-sm text-zinc-500">{t('subtitle')}</p>
 
-      <div className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500">
-              {t('stats.credits')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-3xl font-bold tabular-nums">
-              {user?.credits_available ?? 0}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500">
-              {t('stats.plan')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-3xl font-bold capitalize">
-              {user?.subscription_tier ?? 'trial'}
-            </span>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-zinc-500">
-              {t('stats.trialEnds')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <span className="text-3xl font-bold tabular-nums">
-              {user?.trial_ends_at
-                ? new Date(user.trial_ends_at).toLocaleDateString(locale)
-                : '—'}
-            </span>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Plan / credits / trial stats hidden during the Etsy API review so the
+          dashboard doesn't present a paid-subscription model. Restore alongside
+          the billing UI when SaaS framing returns. */}
 
       <div className="mt-10 flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-300 bg-white py-16 text-center">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-indigo-100">
