@@ -3,11 +3,22 @@
 from app.schemas.seo import ETSY_MAX_TAG_LENGTH, ETSY_MAX_TAGS
 
 ETSY_MAX_TITLE_LENGTH = 140
+ETSY_MAX_DESCRIPTION_LENGTH = 102400
 
 
 def validate_listing_update(fields: dict) -> list[str]:
     """Return a list of constraint violations (empty means valid)."""
     errors: list[str] = []
+
+    if "description" in fields:
+        description = fields["description"]
+        if not isinstance(description, str) or not description.strip():
+            errors.append("description must be a non-empty string")
+        elif len(description) > ETSY_MAX_DESCRIPTION_LENGTH:
+            errors.append(
+                f"description exceeds {ETSY_MAX_DESCRIPTION_LENGTH} characters "
+                f"({len(description)})"
+            )
 
     if "title" in fields:
         title = fields["title"]

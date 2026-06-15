@@ -161,7 +161,10 @@
         "heading": "Description recommendations",
         "missingSections": "Missing sections",
         "additions": "Recommended additions",
-        "allGood": "The description looks good."
+        "allGood": "The description looks good.",
+        "generated": "Generated description",
+        "copy": "Copy",
+        "copied": "Copied!"
       },
       "competitorGap": "Competitor gap"
     }

@@ -132,6 +132,7 @@ export interface SeoAnalysis {
     issues: string[]
     recommended_additions: string[]
     first_paragraph_ok: boolean
+    optimized_description: string | null
   }
   estimated_traffic_lift_pct: number | null
   competitor_gap_summary: string | null

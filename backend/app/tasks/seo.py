@@ -40,6 +40,7 @@ def _build_seo_row(
         description_issues=result.description_analysis.missing_sections,
         recommended_additions=result.description_analysis.recommended_additions,
         first_paragraph_ok=result.description_analysis.first_paragraph_optimized,
+        optimized_description=result.description_analysis.optimized_description,
         estimated_traffic_lift=result.estimated_traffic_lift_percent,
         competitor_gap_summary=result.competitor_gap_summary,
         raw_analysis=result.model_dump(),

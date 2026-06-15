@@ -263,6 +263,8 @@ def apply_optimization(
         listing.title = fields["title"]
     if "tags" in fields:
         listing.tags = fields["tags"]
+    if "description" in fields:
+        listing.description = fields["description"]
     listing.content_hash = compute_content_hash(
         listing.title, listing.description, listing.tags or []
     )

@@ -62,6 +62,7 @@ def _analysis_to_dict(analysis: SeoAnalysis) -> dict:
             "issues": analysis.description_issues or [],
             "recommended_additions": analysis.recommended_additions or [],
             "first_paragraph_ok": analysis.first_paragraph_ok,
+            "optimized_description": analysis.optimized_description,
         },
         "estimated_traffic_lift_pct": analysis.estimated_traffic_lift,
         "competitor_gap_summary": analysis.competitor_gap_summary,
@@ -271,6 +272,27 @@ def apply_seo_analysis(
                     "high-value tags"
                 ),
                 impact_estimate={"seo_score_delta": analysis.tags_score},
+                status="pending",
+            )
+            db.add(opt)
+            created_ids.append(str(opt.id))
+
+    if "description" in fields:
+        if "description" in pending_types or not analysis.optimized_description:
+            skipped.append("description")
+        else:
+            opt = ListingOptimization(
+                id=uuid.uuid4(),
+                listing_id=listing.id,
+                agent_run_id=analysis.agent_run_id,
+                optimization_type="description",
+                old_value=listing.description,
+                new_value=analysis.optimized_description,
+                change_summary=(
+                    "Rewrote the description with keyword-led opening and "
+                    "SIZE/MATERIALS/SHIPPING/CARE sections"
+                ),
+                impact_estimate={"seo_score_delta": analysis.description_score},
                 status="pending",
             )
             db.add(opt)

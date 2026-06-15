@@ -42,6 +42,7 @@ def _valid_payload() -> dict:
             "missing_sections": ["care instructions"],
             "first_paragraph_optimized": False,
             "recommended_additions": ["Add dimensions in first paragraph"],
+            "optimized_description": "Handmade ceramic mug. SIZE: 10cm. CARE: hand wash.",
         },
         "priority": "high",
         "estimated_traffic_lift_percent": 25,

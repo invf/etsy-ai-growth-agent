@@ -36,3 +36,17 @@ def test_duplicate_tags_rejected():
 
 def test_empty_tag_list_rejected():
     assert validate_listing_update({"tags": []})
+
+
+def test_valid_description_passes():
+    assert validate_listing_update({"description": "A nicely written description."}) == []
+
+
+def test_empty_description_rejected():
+    errors = validate_listing_update({"description": "   "})
+    assert any("non-empty" in e for e in errors)
+
+
+def test_description_too_long_rejected():
+    errors = validate_listing_update({"description": "x" * 102401})
+    assert any("102400" in e for e in errors)

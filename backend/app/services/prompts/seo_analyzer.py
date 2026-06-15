@@ -111,6 +111,21 @@ SEO_TOOL: dict[str, Any] = {
                         "type": "array",
                         "items": {"type": "string"},
                     },
+                    "optimized_description": {
+                        "type": "string",
+                        "description": (
+                            "A complete, ready-to-publish Etsy description rewritten "
+                            "per the recommendations. Open the first 1-2 sentences "
+                            "with the primary keywords (Etsy/Google weight the first "
+                            "~160 chars most). State dimensions and materials in the "
+                            "first paragraph. Include clearly labeled SIZE, MATERIALS, "
+                            "SHIPPING, and CARE blocks. Weave secondary keywords in "
+                            "naturally, add a gifting/occasion line, and justify a "
+                            "premium price with an artist/process note. Use plain text "
+                            "(Etsy descriptions don't render markdown); separate "
+                            "sections with line breaks and UPPERCASE labels."
+                        ),
+                    },
                 },
                 "required": [
                     "score",
@@ -118,6 +133,7 @@ SEO_TOOL: dict[str, Any] = {
                     "missing_sections",
                     "first_paragraph_optimized",
                     "recommended_additions",
+                    "optimized_description",
                 ],
             },
             "priority": {
@@ -175,7 +191,7 @@ Favorites: {listing.get('favorites_count', 0)}
 ## Currently Trending Keywords in This Niche
 {', '.join(trending_keywords[:15]) if trending_keywords else 'No trend data available'}
 
-Provide a thorough SEO analysis. Be specific about what to change and why. All recommended tags must be ≤20 characters (Etsy limit)."""
+Provide a thorough SEO analysis. Be specific about what to change and why. All recommended tags must be ≤20 characters (Etsy limit). In description_analysis.optimized_description, write the full, ready-to-publish description (not just guidance) following every recommendation."""
 
 
 def analyze_listing_seo(
@@ -196,5 +212,7 @@ def analyze_listing_seo(
         tool_name="record_seo_analysis",
         output_model=SeoAnalysisResult,
         thinking=True,
-        max_tokens=8192,
+        # Higher ceiling: the analysis now also returns a full rewritten
+        # description, which can be long on top of thinking + the rest.
+        max_tokens=16000,
     )

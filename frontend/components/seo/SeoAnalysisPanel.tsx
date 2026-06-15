@@ -2,6 +2,7 @@ import { useLocale, useTranslations } from 'next-intl'
 import { ArrowRight, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SeoAnalysis } from '@/types'
+import CopyableDescription from '@/components/seo/CopyableDescription'
 
 const PRIORITY_STYLES: Record<SeoAnalysis['priority'], string> = {
   critical: 'bg-red-100 text-red-700',
@@ -159,9 +160,13 @@ export default function SeoAnalysisPanel({ analysis }: { analysis: SeoAnalysis }
           </>
         )}
         {description.issues.length === 0 &&
-          description.recommended_additions.length === 0 && (
+          description.recommended_additions.length === 0 &&
+          !description.optimized_description && (
             <p className="mt-2 text-sm text-zinc-500">{t('description.allGood')}</p>
           )}
+        {description.optimized_description && (
+          <CopyableDescription text={description.optimized_description} />
+        )}
       </section>
 
       {analysis.competitor_gap_summary && (

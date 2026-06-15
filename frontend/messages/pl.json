@@ -161,7 +161,10 @@
         "heading": "Rekomendacje opisu",
         "missingSections": "Brakujące sekcje",
         "additions": "Zalecane uzupełnienia",
-        "allGood": "Opis wygląda dobrze."
+        "allGood": "Opis wygląda dobrze.",
+        "generated": "Wygenerowany opis",
+        "copy": "Kopiuj",
+        "copied": "Skopiowano!"
       },
       "competitorGap": "Luka wobec konkurencji"
     }

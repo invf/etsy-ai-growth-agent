@@ -58,6 +58,7 @@ class SeoAnalysis(Base):
     description_issues: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     recommended_additions: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     first_paragraph_ok: Mapped[bool] = mapped_column(Boolean, default=True)
+    optimized_description: Mapped[str | None] = mapped_column(Text)
 
     # Impact estimates
     estimated_traffic_lift: Mapped[int | None] = mapped_column(SmallInteger)

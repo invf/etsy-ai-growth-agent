@@ -21,7 +21,7 @@ export default function CreateOptimizationsButton({ listingId }: { listingId: st
     setBusy(true)
     setError(null)
     try {
-      await api.seo.apply(token, listingId)
+      await api.seo.apply(token, listingId, ['title', 'tags', 'description'])
       router.refresh()
     } catch {
       setError(t('failed'))

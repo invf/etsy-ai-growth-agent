@@ -133,6 +133,27 @@ def test_get_seo_returns_latest_analysis(user):
     assert data["estimated_traffic_lift_pct"] == 20
 
 
+def test_get_seo_includes_optimized_description(user):
+    listing = _listing()
+    analysis = SeoAnalysis(
+        listing_id=listing.id,
+        overall_score=70,
+        priority="high",
+        optimized_description="Handmade ceramic mug. SIZE: 10cm. CARE: hand wash.",
+        model_used="claude-opus-4-8",
+        from_cache=False,
+    )
+    analysis.id = uuid.uuid4()
+    analysis.created_at = datetime.now(timezone.utc)
+
+    client = _client(_db(listing=listing, store=MagicMock(), analysis=analysis), user)
+    resp = client.get(f"/v1/listings/{listing.id}/seo")
+
+    assert resp.status_code == 200
+    desc = resp.json()["data"]["description_analysis"]
+    assert desc["optimized_description"].startswith("Handmade ceramic mug")
+
+
 def test_trigger_seo_409_when_already_running(user):
     running = MagicMock(id=uuid.uuid4())
     client = _client(

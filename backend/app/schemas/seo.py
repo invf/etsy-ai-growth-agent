@@ -50,6 +50,8 @@ class DescriptionAnalysis(BaseModel):
     missing_sections: list[str]
     first_paragraph_optimized: bool
     recommended_additions: list[str]
+    # Full ready-to-publish description rewritten per the recommendations.
+    optimized_description: str = Field(min_length=1)
 
 
 class SeoAnalysisResult(BaseModel):
@@ -67,7 +69,7 @@ class SeoAnalysisResult(BaseModel):
 class SeoApplyIn(BaseModel):
     """Which recommendation fields to turn into pending optimizations."""
 
-    fields: list[Literal["title", "tags"]] = Field(
+    fields: list[Literal["title", "tags", "description"]] = Field(
         default=["title", "tags"], min_length=1
     )
 
