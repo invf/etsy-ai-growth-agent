@@ -57,7 +57,7 @@ class AIUsage:
 
 def compute_cost(usage: AIUsage) -> Decimal:
     input_price, output_price = MODEL_PRICING.get(
-        usage.model, MODEL_PRICING["claude-fable-5"]
+        usage.model, MODEL_PRICING["claude-opus-4-8"]
     )
     cost = (
         Decimal(usage.input_tokens) * input_price
@@ -109,7 +109,7 @@ class AIService:
             "tools": [tool_schema],
             "tool_choice": {"type": "tool", "name": tool_name},
         }
-        # Fable 5: thinking is always on; adaptive is the only accepted value.
+        # Opus 4.8 / Fable 5: adaptive is the only accepted thinking value.
         # Haiku/fast models: omit the param entirely.
         if thinking:
             kwargs["thinking"] = {"type": "adaptive"}

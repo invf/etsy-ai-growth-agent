@@ -121,7 +121,7 @@ def test_analyze_listing_seo_uses_primary_model_with_thinking():
     assert result is expected
     assert returned_usage is usage
     kwargs = ai.call_with_structured_output.call_args.kwargs
-    assert kwargs["model"] == "claude-fable-5"
+    assert kwargs["model"] == "claude-opus-4-8"
     assert kwargs["thinking"] is True
     assert kwargs["tool_name"] == "record_seo_analysis"
     assert kwargs["output_model"] is SeoAnalysisResult

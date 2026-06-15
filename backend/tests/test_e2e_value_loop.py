@@ -230,7 +230,7 @@ def test_full_value_loop(world):
     # The persisted analysis row links back to the run
     stored = world.db.query(SeoAnalysis).first()
     assert str(stored.agent_run_id) == run_id
-    assert stored.model_used == "claude-fable-5"
+    assert stored.model_used == "claude-opus-4-8"
 
 
 def test_loop_blocks_unapproved_apply(world):

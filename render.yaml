@@ -82,7 +82,7 @@ services:
       - key: APP_ENV
         value: production
       - key: AI_MODEL_PRIMARY
-        value: claude-fable-5
+        value: claude-opus-4-8
       - key: AI_MODEL_FAST
         value: claude-haiku-4-5
       # SET AFTER FIRST DEPLOY → your Vercel URL, e.g. https://etsy-ai-growth-agent.vercel.app
@@ -133,7 +133,7 @@ services:
       - key: APP_ENV
         value: production
       - key: AI_MODEL_PRIMARY
-        value: claude-fable-5
+        value: claude-opus-4-8
       - key: AI_MODEL_FAST
         value: claude-haiku-4-5
       - fromGroup: etsy-agent-secrets

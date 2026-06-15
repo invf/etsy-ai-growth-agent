@@ -125,4 +125,4 @@ def test_compute_cost_unknown_model_falls_back_to_primary_pricing():
         cache_write_tokens=0,
         cost_usd=Decimal(0),
     )
-    assert compute_cost(usage) == Decimal("10.000000")
+    assert compute_cost(usage) == Decimal("5.000000")
