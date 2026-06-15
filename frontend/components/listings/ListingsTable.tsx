@@ -63,10 +63,10 @@ export default function ListingsTable({
       <table className="w-full min-w-[720px] text-sm">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
-            <th className="px-4 py-3 font-medium">{t('columns.listing')}</th>
-            <th className="px-4 py-3 font-medium">{t('columns.state')}</th>
+            <th className="px-3 py-3 font-medium">{t('columns.listing')}</th>
+            <th className="px-3 py-3 font-medium">{t('columns.state')}</th>
             {(Object.keys(SORTABLE) as (keyof typeof SORTABLE)[]).map((key) => (
-              <th key={key} className="px-4 py-3 font-medium">
+              <th key={key} className="px-3 py-3 font-medium">
                 <Link
                   href={sortHref(SORTABLE[key])}
                   className="inline-flex items-center gap-1 hover:text-zinc-900"
@@ -86,7 +86,7 @@ export default function ListingsTable({
         <tbody>
           {listings.map((listing) => (
             <tr key={listing.id} className="border-b border-zinc-100 last:border-0">
-              <td className="px-4 py-3">
+              <td className="px-3 py-3">
                 <div className="flex items-center gap-3">
                   {listing.main_image_url ? (
                     <Image
@@ -115,12 +115,12 @@ export default function ListingsTable({
                   </div>
                 </div>
               </td>
-              <td className="px-4 py-3 capitalize text-zinc-600">{listing.state}</td>
-              <td className="px-4 py-3 tabular-nums">{formatPrice(listing)}</td>
-              <td className="px-4 py-3 tabular-nums">{listing.views_count}</td>
-              <td className="px-4 py-3 tabular-nums">{listing.favorites_count}</td>
-              <td className="px-4 py-3 tabular-nums">{listing.sales_count}</td>
-              <td className="px-4 py-3">
+              <td className="px-3 py-3 capitalize text-zinc-600">{listing.state}</td>
+              <td className="px-3 py-3 tabular-nums">{formatPrice(listing)}</td>
+              <td className="px-3 py-3 tabular-nums">{listing.views_count}</td>
+              <td className="px-3 py-3 tabular-nums">{listing.favorites_count}</td>
+              <td className="px-3 py-3 tabular-nums">{listing.sales_count}</td>
+              <td className="px-3 py-3">
                 <span
                   className={cn(
                     'inline-flex min-w-9 justify-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums',
@@ -136,7 +136,7 @@ export default function ListingsTable({
       </table>
       </div>
 
-      <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3 text-sm text-zinc-500">
+      <div className="flex items-center justify-between border-t border-zinc-200 px-3 py-3 text-sm text-zinc-500">
         <span>
           {t('pagination', {
             page: meta.page,

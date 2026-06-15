@@ -79,7 +79,7 @@ export default async function StoresPage({
     searchParams.connected === 'true' ? searchParams.shop_name ?? '' : null
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-8">
+    <main className="mx-auto max-w-7xl px-4 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold text-zinc-900">{t('title')}</h1>
