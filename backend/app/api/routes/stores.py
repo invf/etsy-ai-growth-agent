@@ -1,10 +1,12 @@
 import json
+import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import cast
 from urllib.parse import quote
 
+import httpx
 import redis
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
@@ -23,6 +25,8 @@ from app.services.etsy_client import (
     exchange_oauth_code,
     fetch_current_shop,
 )
+
+logger = logging.getLogger("etsy.oauth")
 
 router = APIRouter(prefix="/stores", tags=["stores"])
 
@@ -171,8 +175,28 @@ def etsy_oauth_callback(
 
     try:
         tokens = exchange_oauth_code(code, state_data["code_verifier"])
-        shop = fetch_current_shop(tokens["access_token"])
+    except httpx.HTTPStatusError as exc:
+        logger.error(
+            "Etsy token exchange failed: %s %s",
+            exc.response.status_code,
+            exc.response.text,
+        )
+        return _error_redirect("OAUTH_FAILED")
     except Exception:
+        logger.exception("Etsy token exchange raised")
+        return _error_redirect("OAUTH_FAILED")
+
+    try:
+        shop = fetch_current_shop(tokens["access_token"])
+    except httpx.HTTPStatusError as exc:
+        logger.error(
+            "Etsy fetch shop failed: %s %s",
+            exc.response.status_code,
+            exc.response.text,
+        )
+        return _error_redirect("OAUTH_FAILED")
+    except Exception:
+        logger.exception("Etsy fetch shop raised")
         return _error_redirect("OAUTH_FAILED")
 
     store = db.query(Store).filter_by(etsy_shop_id=str(shop["shop_id"])).first()
