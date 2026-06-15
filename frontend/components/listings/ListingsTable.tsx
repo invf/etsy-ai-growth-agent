@@ -59,7 +59,8 @@ export default function ListingsTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-      <table className="w-full text-sm">
+      <div className="overflow-x-auto">
+      <table className="w-full min-w-[720px] text-sm">
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
             <th className="px-4 py-3 font-medium">{t('columns.listing')}</th>
@@ -133,6 +134,7 @@ export default function ListingsTable({
           ))}
         </tbody>
       </table>
+      </div>
 
       <div className="flex items-center justify-between border-t border-zinc-200 px-4 py-3 text-sm text-zinc-500">
         <span>
