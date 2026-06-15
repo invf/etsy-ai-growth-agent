@@ -107,12 +107,18 @@ class AIService:
             ],
             "messages": [{"role": "user", "content": user_message}],
             "tools": [tool_schema],
-            "tool_choice": {"type": "tool", "name": tool_name},
         }
         # Opus 4.8 / Fable 5: adaptive is the only accepted thinking value.
-        # Haiku/fast models: omit the param entirely.
+        # Forcing a specific tool is rejected while thinking is on
+        # ("Thinking may not be enabled when tool_choice forces tool use"), so
+        # let the model call the tool itself — the prompt instructs it to, and
+        # we validate the tool_use block below. Fast models (no thinking) keep
+        # the hard force for a guaranteed structured response.
         if thinking:
             kwargs["thinking"] = {"type": "adaptive"}
+            kwargs["tool_choice"] = {"type": "auto"}
+        else:
+            kwargs["tool_choice"] = {"type": "tool", "name": tool_name}
 
         response = self.client.messages.create(**kwargs)
 
@@ -140,6 +146,4 @@ class AIService:
                         f"{tool_name} output failed validation: {exc}"
                     ) from exc
 
-        raise AIStructuredOutputError(
-            f"Model did not call {tool_name} despite forced tool_choice"
-        )
+        raise AIStructuredOutputError(f"Model did not call {tool_name}")

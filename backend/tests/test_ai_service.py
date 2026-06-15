@@ -74,23 +74,27 @@ def test_returns_validated_model_and_usage():
     assert usage.cache_read_tokens == 2000
 
 
-def test_forces_tool_choice_and_caches_system():
+def test_thinking_uses_auto_tool_choice_and_caches_system():
+    # Forcing a specific tool is rejected while thinking is on, so the thinking
+    # path must use tool_choice "auto".
     service, client = _service(_response([_tool_block()]))
 
     _call(service, thinking=True)
 
     kwargs = client.messages.create.call_args.kwargs
-    assert kwargs["tool_choice"] == {"type": "tool", "name": "record_answer"}
+    assert kwargs["tool_choice"] == {"type": "auto"}
     assert kwargs["system"][0]["cache_control"] == {"type": "ephemeral"}
     assert kwargs["thinking"] == {"type": "adaptive"}
 
 
-def test_omits_thinking_param_by_default():
+def test_omits_thinking_param_and_forces_tool_by_default():
     service, client = _service(_response([_tool_block()]))
 
     _call(service)
 
-    assert "thinking" not in client.messages.create.call_args.kwargs
+    kwargs = client.messages.create.call_args.kwargs
+    assert "thinking" not in kwargs
+    assert kwargs["tool_choice"] == {"type": "tool", "name": "record_answer"}
 
 
 def test_raises_on_refusal():
