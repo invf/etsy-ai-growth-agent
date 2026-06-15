@@ -19,6 +19,18 @@ def _throttle() -> None:
     get_etsy_rate_limiter().acquire()
 
 
+def _api_headers(access_token: str) -> dict[str, str]:
+    """Headers for authenticated v3 application calls.
+
+    Etsy requires x-api-key to be "<keystring>:<shared_secret>" (a bare
+    keystring returns 403 "Shared secret is required in x-api-key header").
+    """
+    return {
+        "x-api-key": f"{settings.ETSY_CLIENT_ID}:{settings.ETSY_CLIENT_SECRET}",
+        "Authorization": f"Bearer {access_token}",
+    }
+
+
 def compute_code_challenge(code_verifier: str) -> str:
     """PKCE S256: base64url(sha256(code_verifier)) without padding."""
     digest = hashlib.sha256(code_verifier.encode("ascii")).digest()
@@ -85,10 +97,7 @@ def get_shop_listings(
     _throttle()
     resp = httpx.get(
         f"{ETSY_API_BASE}/application/shops/{shop_id}/listings/active",
-        headers={
-            "x-api-key": settings.ETSY_CLIENT_ID,
-            "Authorization": f"Bearer {access_token}",
-        },
+        headers=_api_headers(access_token),
         params={"limit": limit, "offset": offset, "includes": "Images"},
         timeout=30,
     )
@@ -110,10 +119,7 @@ def update_listing(
         data["tags"] = ",".join(data["tags"])
     resp = httpx.patch(
         f"{ETSY_API_BASE}/application/shops/{shop_id}/listings/{etsy_listing_id}",
-        headers={
-            "x-api-key": settings.ETSY_CLIENT_ID,
-            "Authorization": f"Bearer {access_token}",
-        },
+        headers=_api_headers(access_token),
         data=data,
         timeout=15,
     )
@@ -126,10 +132,7 @@ def fetch_current_shop(access_token: str) -> dict:
     _throttle()
     resp = httpx.get(
         f"{ETSY_API_BASE}/application/users/me/shops",
-        headers={
-            "x-api-key": settings.ETSY_CLIENT_ID,
-            "Authorization": f"Bearer {access_token}",
-        },
+        headers=_api_headers(access_token),
         timeout=10,
     )
     resp.raise_for_status()
