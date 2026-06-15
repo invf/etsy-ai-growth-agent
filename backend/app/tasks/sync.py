@@ -113,9 +113,9 @@ def sync_store_listings(self, store_id: str) -> dict:
                     if not item.get("images"):
                         try:
                             item["images"] = (
-                                get_listing_images(
-                                    token, store.etsy_shop_id, etsy_listing_id
-                                ).get("results")
+                                get_listing_images(token, etsy_listing_id).get(
+                                    "results"
+                                )
                                 or []
                             )
                         except Exception:

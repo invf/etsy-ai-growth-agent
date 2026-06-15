@@ -144,7 +144,7 @@ def test_sync_fetches_images_when_listing_omits_them(monkeypatch):
     result = sync_mod.sync_store_listings("some-id")
 
     assert result == {"status": "ok", "synced": 1}
-    images.assert_called_once_with("tok", "s1", 111)
+    images.assert_called_once_with("tok", 111)
     assert listing.main_image_url == "https://x/1.jpg"
     assert listing.image_count == 1
 
