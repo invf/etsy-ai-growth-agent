@@ -128,10 +128,16 @@ def update_listing(
 
 
 def fetch_current_shop(access_token: str) -> dict:
-    """Fetch the shop belonging to the authenticated Etsy user."""
+    """Fetch the shop belonging to the authenticated Etsy user.
+
+    getShopByOwnerUserId needs a numeric user_id, not the `me` alias (which
+    returns 400 "Expected int value for 'user_id'"). Etsy prefixes the access
+    token with that user_id: "<user_id>.<token>".
+    """
+    user_id = access_token.split(".")[0]
     _throttle()
     resp = httpx.get(
-        f"{ETSY_API_BASE}/application/users/me/shops",
+        f"{ETSY_API_BASE}/application/users/{user_id}/shops",
         headers=_api_headers(access_token),
         timeout=10,
     )
