@@ -9,7 +9,7 @@ from app.celery_app import celery_app
 from app.db.models.listing import Listing
 from app.db.models.store import Store
 from app.db.session import get_db_session
-from app.services.etsy_client import get_shop_listings
+from app.services.etsy_client import get_listing_images, get_shop_listings
 from app.services.etsy_token_service import (
     StoreNotConnectedError,
     get_valid_access_token,
@@ -108,6 +108,18 @@ def sync_store_listings(self, store_id: str) -> dict:
                 results = page.get("results") or []
                 for item in results:
                     etsy_listing_id = item["listing_id"]
+                    # The listings collection endpoint omits images; fetch them
+                    # per listing. Best-effort: a missing image must not abort sync.
+                    if not item.get("images"):
+                        try:
+                            item["images"] = (
+                                get_listing_images(
+                                    token, store.etsy_shop_id, etsy_listing_id
+                                ).get("results")
+                                or []
+                            )
+                        except Exception:
+                            item["images"] = []
                     listing = (
                         db.query(Listing)
                         .filter_by(etsy_listing_id=etsy_listing_id)

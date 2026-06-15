@@ -105,6 +105,22 @@ def get_shop_listings(
     return resp.json()
 
 
+def get_listing_images(access_token: str, shop_id: str, etsy_listing_id: int) -> dict:
+    """Images for one listing: {count, results: [...]}.
+
+    The shop listings collection endpoint ignores includes=Images, so images
+    have to be fetched per listing from this dedicated endpoint.
+    """
+    _throttle()
+    resp = httpx.get(
+        f"{ETSY_API_BASE}/application/shops/{shop_id}/listings/{etsy_listing_id}/images",
+        headers=_api_headers(access_token),
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
 def update_listing(
     access_token: str, shop_id: str, etsy_listing_id: int, fields: dict
 ) -> dict:

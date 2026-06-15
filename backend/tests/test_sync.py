@@ -120,6 +120,35 @@ def test_fetch_page_non_401_error_bubbles_up(monkeypatch):
     refresh.assert_not_called()
 
 
+def test_sync_fetches_images_when_listing_omits_them(monkeypatch):
+    store = Store(etsy_shop_id="s1", shop_name="Shop", status="active", sync_status="idle")
+    listing = Listing(store_id=None, etsy_listing_id=111)
+    db = MagicMock()
+    # first() is called for the Store, then for the Listing
+    db.query.return_value.filter_by.return_value.first.side_effect = [store, listing]
+
+    @contextmanager
+    def fake_session():
+        yield db
+
+    monkeypatch.setattr(sync_mod, "get_db_session", fake_session)
+    monkeypatch.setattr(sync_mod, "get_valid_access_token", MagicMock(return_value="tok"))
+    monkeypatch.setattr(
+        sync_mod,
+        "get_shop_listings",
+        MagicMock(return_value={"count": 1, "results": [{"listing_id": 111, "title": "X"}]}),
+    )
+    images = MagicMock(return_value={"results": [{"url_fullxfull": "https://x/1.jpg"}]})
+    monkeypatch.setattr(sync_mod, "get_listing_images", images)
+
+    result = sync_mod.sync_store_listings("some-id")
+
+    assert result == {"status": "ok", "synced": 1}
+    images.assert_called_once_with("tok", "s1", 111)
+    assert listing.main_image_url == "https://x/1.jpg"
+    assert listing.image_count == 1
+
+
 def test_sync_marks_store_disconnected_on_revoked_token(monkeypatch):
     store = Store(etsy_shop_id="s1", shop_name="Shop", status="active", sync_status="idle")
     db = MagicMock()
