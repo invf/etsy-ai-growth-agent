@@ -109,7 +109,7 @@ def test_build_user_message_handles_missing_context():
     assert "No trend data available" in msg
 
 
-def test_analyze_listing_seo_uses_primary_model_with_thinking():
+def test_analyze_listing_seo_forces_tool_without_thinking():
     expected = SeoAnalysisResult.model_validate(_valid_payload())
     usage = AIUsage(
         model="claude-fable-5",
@@ -128,8 +128,8 @@ def test_analyze_listing_seo_uses_primary_model_with_thinking():
     assert returned_usage is usage
     kwargs = ai.call_with_structured_output.call_args.kwargs
     assert kwargs["model"] == "claude-opus-4-8"
-    # Thinking on for quality (fills nested fields like ALT suggestions); the
-    # gateway has its own forced-tool fallback for reliability.
-    assert kwargs["thinking"] is True
+    # Thinking off so the gateway forces the tool (guaranteed structured output,
+    # cheaper, faster).
+    assert kwargs["thinking"] is False
     assert kwargs["tool_name"] == "record_seo_analysis"
     assert kwargs["output_model"] is SeoAnalysisResult

@@ -219,12 +219,12 @@ def analyze_listing_seo(
         tool_schema=SEO_TOOL,
         tool_name="record_seo_analysis",
         output_model=SeoAnalysisResult,
-        # Thinking on: it makes the model fill the nested fields well and write a
-        # stronger rewritten description. The gateway falls back to a forced tool
-        # call (thinking off) if the model ever ends its turn without calling the
-        # tool, so reliability is preserved.
-        thinking=True,
-        # Adaptive thinking shares this budget with the tool-call output (the
-        # full rewritten description can be long), so give generous headroom.
-        max_tokens=32000,
+        # Thinking off: cheapest and most reliable — the gateway forces the tool,
+        # so the structured output is guaranteed. Quality stays good on Sonnet 4.6
+        # thanks to the detailed schema; the description is slightly less deeply
+        # reasoned than with thinking, which the user accepted for the cost win.
+        thinking=False,
+        # No thinking means only the JSON output draws from this budget; the full
+        # rewritten description plus the rest fit comfortably in 16k.
+        max_tokens=16000,
     )
