@@ -60,13 +60,22 @@ export default function ListingsTable({
   return (
     <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
       <div className="overflow-x-auto">
-      <table className="w-full min-w-[720px] text-sm">
+      <table className="w-full min-w-[720px] table-fixed text-sm">
+        <colgroup>
+          <col className="w-[40%]" />
+          <col className="w-[10%]" />
+          <col className="w-[12%]" />
+          <col className="w-[9%]" />
+          <col className="w-[13%]" />
+          <col className="w-[8%]" />
+          <col className="w-[8%]" />
+        </colgroup>
         <thead>
           <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
             <th className="px-3 py-3 font-medium">{t('columns.listing')}</th>
             <th className="px-3 py-3 font-medium">{t('columns.state')}</th>
             {(Object.keys(SORTABLE) as (keyof typeof SORTABLE)[]).map((key) => (
-              <th key={key} className="px-3 py-3 font-medium">
+              <th key={key} className="whitespace-nowrap px-3 py-3 font-medium">
                 <Link
                   href={sortHref(SORTABLE[key])}
                   className="inline-flex items-center gap-1 hover:text-zinc-900"
