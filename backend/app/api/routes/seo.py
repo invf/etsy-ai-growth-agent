@@ -69,10 +69,6 @@ def _analysis_to_dict(analysis: SeoAnalysis) -> dict:
             "first_paragraph_ok": analysis.first_paragraph_ok,
             "optimized_description": analysis.optimized_description,
         },
-        "image_alt_analysis": {
-            "score": analysis.image_alt_score,
-            "suggestions": analysis.image_alt_suggestions or [],
-        },
         "estimated_traffic_lift_pct": analysis.estimated_traffic_lift,
         "competitor_gap_summary": analysis.competitor_gap_summary,
         "from_cache": analysis.from_cache,

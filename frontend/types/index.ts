@@ -134,15 +134,6 @@ export interface SeoAnalysis {
     first_paragraph_ok: boolean
     optimized_description: string | null
   }
-  image_alt_analysis: {
-    score: number | null
-    suggestions: {
-      image_index: number
-      current_alt: string
-      suggested_alt: string
-      issue: string
-    }[]
-  }
   estimated_traffic_lift_pct: number | null
   competitor_gap_summary: string | null
   from_cache: boolean

@@ -55,9 +55,8 @@ def _apply_etsy_listing(listing: Listing, item: dict) -> None:
     listing.state = item.get("state") or "active"
     listing.taxonomy_id = item.get("taxonomy_id")
 
-    images = [img for img in (item.get("images") or []) if img.get("url_fullxfull")]
-    listing.image_urls = [img["url_fullxfull"] for img in images]
-    listing.image_alt_texts = [(img.get("alt_text") or "") for img in images]
+    images = item.get("images") or []
+    listing.image_urls = [img["url_fullxfull"] for img in images if img.get("url_fullxfull")]
     listing.main_image_url = listing.image_urls[0] if listing.image_urls else None
     listing.image_count = len(listing.image_urls)
 

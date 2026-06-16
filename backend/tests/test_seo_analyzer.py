@@ -41,19 +41,6 @@ def _valid_payload() -> dict:
             "recommended_additions": ["Lead the first paragraph with the keyword"],
             "optimized_description": "Handmade ceramic mug for cozy mornings. CARE: hand wash.",
         },
-        "image_alt_analysis": {
-            "score": 40,
-            "images_with_alt": 0,
-            "images_total": 2,
-            "suggestions": [
-                {
-                    "image_index": 0,
-                    "current_alt": "",
-                    "suggested_alt": "Handmade ceramic coffee mug in matte white, front view",
-                    "issue": "No ALT text set",
-                }
-            ],
-        },
         "priority": "high",
         "estimated_traffic_lift_percent": 25,
         "competitor_gap_summary": "Competitors use seasonal keywords; this listing does not.",
@@ -81,13 +68,11 @@ def test_seo_result_caps_tags_at_13():
     assert len(result.tags_analysis.full_optimized_tag_set) == 13
 
 
-def test_seo_result_clamps_long_title_and_alt():
+def test_seo_result_clamps_long_title():
     payload = _valid_payload()
     payload["title_analysis"]["optimized_title"] = "T" * 200
-    payload["image_alt_analysis"]["suggestions"][0]["suggested_alt"] = "A" * 300
     result = SeoAnalysisResult.model_validate(payload)
     assert len(result.title_analysis.optimized_title) == 140
-    assert len(result.image_alt_analysis.suggestions[0].suggested_alt) == 250
 
 
 def test_tool_schema_enforces_etsy_tag_limits():
@@ -122,14 +107,6 @@ def test_build_user_message_handles_missing_context():
     msg = build_seo_user_message({"title": "X"}, [], [])
     assert "No competitor data available" in msg
     assert "No trend data available" in msg
-    assert "No photo data available" in msg
-
-
-def test_build_user_message_includes_photo_alt_texts():
-    listing = {"title": "Mug", "image_alt_texts": ["Front view", ""]}
-    msg = build_seo_user_message(listing, [], [])
-    assert "Photo 0 ALT: Front view" in msg
-    assert "Photo 1 ALT: (no ALT text)" in msg
 
 
 def test_analyze_listing_seo_uses_primary_model_with_thinking():

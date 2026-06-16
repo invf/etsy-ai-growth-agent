@@ -3,7 +3,6 @@ import { ArrowRight, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { SeoAnalysis } from '@/types'
 import CopyableDescription from '@/components/seo/CopyableDescription'
-import CopyableAltText from '@/components/seo/CopyableAltText'
 
 const PRIORITY_STYLES: Record<SeoAnalysis['priority'], string> = {
   critical: 'bg-red-100 text-red-700',
@@ -44,7 +43,6 @@ export default function SeoAnalysisPanel({ analysis }: { analysis: SeoAnalysis }
   const title = analysis.title_analysis
   const tags = analysis.tags_analysis
   const description = analysis.description_analysis
-  const images = analysis.image_alt_analysis
 
   return (
     <div className="space-y-4">
@@ -170,51 +168,6 @@ export default function SeoAnalysisPanel({ analysis }: { analysis: SeoAnalysis }
           <CopyableDescription text={description.optimized_description} />
         )}
       </section>
-
-      {images && (images.suggestions.length > 0 || images.score !== null) && (
-        <section className="rounded-xl border border-zinc-200 bg-white p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-zinc-900">
-              {t('images.heading')}
-            </h3>
-            {images.score !== null && (
-              <span className="text-xs font-semibold tabular-nums text-zinc-500">
-                {images.score}/100
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-xs text-zinc-500">{t('images.hint')}</p>
-          {images.suggestions.length > 0 ? (
-            <ul className="mt-3 space-y-3">
-              {images.suggestions.map((s) => (
-                <li
-                  key={s.image_index}
-                  className="rounded-lg border border-zinc-100 bg-zinc-50/60 p-3"
-                >
-                  <p className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-400">
-                    {t('images.photo', { n: s.image_index + 1 })}
-                  </p>
-                  <p className="text-xs text-zinc-500">
-                    {t('images.current')}:{' '}
-                    <span className="text-zinc-600">
-                      {s.current_alt?.trim() || t('images.noAlt')}
-                    </span>
-                  </p>
-                  <div className="mt-2">
-                    <p className="mb-1 text-xs text-zinc-500">{t('images.suggested')}</p>
-                    <CopyableAltText text={s.suggested_alt} />
-                  </div>
-                  {s.issue && <p className="mt-1 text-xs text-zinc-400">{s.issue}</p>}
-                </li>
-              ))}
-            </ul>
-          ) : (images.score ?? 0) >= 50 ? (
-            <p className="mt-2 text-sm text-zinc-500">{t('images.allGood')}</p>
-          ) : (
-            <p className="mt-2 text-sm text-zinc-500">{t('images.needsSync')}</p>
-          )}
-        </section>
-      )}
 
       {analysis.competitor_gap_summary && (
         <section className="rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">

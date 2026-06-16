@@ -41,10 +41,6 @@ def _build_seo_row(
         recommended_additions=result.description_analysis.recommended_additions,
         first_paragraph_ok=result.description_analysis.first_paragraph_optimized,
         optimized_description=result.description_analysis.optimized_description,
-        image_alt_score=result.image_alt_analysis.score,
-        image_alt_suggestions=[
-            s.model_dump() for s in result.image_alt_analysis.suggestions
-        ],
         estimated_traffic_lift=result.estimated_traffic_lift_percent,
         competitor_gap_summary=result.competitor_gap_summary,
         raw_analysis=result.model_dump(),
@@ -112,7 +108,6 @@ def analyze_single(self, listing_id: str, run_id: str) -> dict:
                     "price_usd": listing.price_usd,
                     "views_count": listing.views_count,
                     "favorites_count": listing.favorites_count,
-                    "image_alt_texts": listing.image_alt_texts or [],
                 }
             )
         except AIRefusalError as exc:

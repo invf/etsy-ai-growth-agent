@@ -144,67 +144,6 @@ SEO_TOOL: dict[str, Any] = {
                     "optimized_description",
                 ],
             },
-            "image_alt_analysis": {
-                "type": "object",
-                "properties": {
-                    "score": {"type": "integer", "minimum": 0, "maximum": 100},
-                    "images_with_alt": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "description": "How many photos already have non-empty ALT text",
-                    },
-                    "images_total": {"type": "integer", "minimum": 0},
-                    "suggestions": {
-                        "type": "array",
-                        "description": (
-                            "One entry per photo that needs a better ALT text. "
-                            "Skip photos whose current ALT is already strong."
-                        ),
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "image_index": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "description": "0-based position of the photo",
-                                },
-                                "current_alt": {
-                                    "type": "string",
-                                    "description": "Existing ALT text, empty string if none",
-                                },
-                                "suggested_alt": {
-                                    "type": "string",
-                                    "maxLength": 250,
-                                    "description": (
-                                        "A descriptive, keyword-rich ALT text (≤250 "
-                                        "chars) that helps accessibility AND Etsy/Google "
-                                        "image SEO. Lead with the primary keyword, "
-                                        "describe what the photo likely shows (product, "
-                                        "color, material, angle/use), and read naturally "
-                                        "— not a keyword dump. Vary it per photo."
-                                    ),
-                                },
-                                "issue": {
-                                    "type": "string",
-                                    "description": "Why the current ALT is weak/missing",
-                                },
-                            },
-                            "required": [
-                                "image_index",
-                                "current_alt",
-                                "suggested_alt",
-                                "issue",
-                            ],
-                        },
-                    },
-                },
-                "required": [
-                    "score",
-                    "images_with_alt",
-                    "images_total",
-                    "suggestions",
-                ],
-            },
             "priority": {
                 "type": "string",
                 "enum": ["critical", "high", "medium", "low"],
@@ -224,7 +163,6 @@ SEO_TOOL: dict[str, Any] = {
             "title_analysis",
             "tags_analysis",
             "description_analysis",
-            "image_alt_analysis",
             "priority",
             "estimated_traffic_lift_percent",
             "competitor_gap_summary",
@@ -245,15 +183,6 @@ def build_seo_user_message(
         for i, c in enumerate(competitor_context[:5])
     )
 
-    alt_texts = listing.get("image_alt_texts") or []
-    if alt_texts:
-        image_text = "\n".join(
-            f"Photo {i} ALT: {alt.strip() or '(no ALT text)'}"
-            for i, alt in enumerate(alt_texts)
-        )
-    else:
-        image_text = "No photo data available"
-
     return f"""Analyze this Etsy listing for SEO optimization:
 
 ## Listing to Analyze
@@ -264,16 +193,13 @@ Price: ${float(listing.get('price_usd') or 0):.2f}
 Current Views: {listing.get('views_count', 0)}
 Favorites: {listing.get('favorites_count', 0)}
 
-## Listing Photos (ALT text, in order)
-{image_text}
-
 ## Top Competitor Listings in Same Category (from Etsy search results)
 {competitor_text if competitor_text else 'No competitor data available'}
 
 ## Currently Trending Keywords in This Niche
 {', '.join(trending_keywords[:15]) if trending_keywords else 'No trend data available'}
 
-Provide a thorough SEO analysis. Be specific about what to change and why. All recommended tags must be ≤20 characters (Etsy limit). Reflect Etsy's 2026 "Celebrate Being Human" direction: where it authentically fits the product, surface emotional, gifting, occasion, milestone, personalization, and handmade long-tail keywords in the optimized title and tag set, and carry that human/handmade story through the description — but never force themes onto an item they don't match, and don't sacrifice high-intent search keywords for sentiment. In description_analysis.optimized_description, write the full, ready-to-publish description (not just guidance) following every recommendation. In image_alt_analysis, evaluate each photo's ALT text (you cannot see the photos — infer likely content from the title, tags, and materials) and provide an improved, keyword-rich ALT text for every photo that is missing or weak; set images_total to the number of photos listed above."""
+Provide a thorough SEO analysis. Be specific about what to change and why. All recommended tags must be ≤20 characters (Etsy limit). Reflect Etsy's 2026 "Celebrate Being Human" direction: where it authentically fits the product, surface emotional, gifting, occasion, milestone, personalization, and handmade long-tail keywords in the optimized title and tag set, and carry that human/handmade story through the description — but never force themes onto an item they don't match, and don't sacrifice high-intent search keywords for sentiment. In description_analysis.optimized_description, write the full, ready-to-publish description (not just guidance) following every recommendation."""
 
 
 def analyze_listing_seo(
@@ -293,13 +219,12 @@ def analyze_listing_seo(
         tool_schema=SEO_TOOL,
         tool_name="record_seo_analysis",
         output_model=SeoAnalysisResult,
-        # Thinking on: it's what makes the model fill the nested fields well —
-        # notably a per-photo ALT suggestion for every photo. Without it the
-        # model gets lazy and returns an empty suggestions array. The gateway
-        # falls back to a forced tool call (thinking off) if the model ever ends
-        # its turn without calling the tool, so reliability is preserved.
+        # Thinking on: it makes the model fill the nested fields well and write a
+        # stronger rewritten description. The gateway falls back to a forced tool
+        # call (thinking off) if the model ever ends its turn without calling the
+        # tool, so reliability is preserved.
         thinking=True,
-        # Adaptive thinking shares this budget with the tool-call output (full
-        # description + per-photo ALT suggestions), so give generous headroom.
+        # Adaptive thinking shares this budget with the tool-call output (the
+        # full rewritten description can be long), so give generous headroom.
         max_tokens=32000,
     )

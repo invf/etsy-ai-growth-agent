@@ -78,32 +78,6 @@ class DescriptionAnalysis(BaseModel):
     optimized_description: str = Field(min_length=1)
 
 
-ETSY_MAX_ALT_TEXT_LENGTH = 250
-
-
-class ImageAltSuggestion(BaseModel):
-    """A suggested ALT text for one listing photo (by position)."""
-
-    image_index: int = Field(ge=0)
-    current_alt: str
-    suggested_alt: str = Field(max_length=ETSY_MAX_ALT_TEXT_LENGTH)
-    issue: str
-
-    @field_validator("suggested_alt", mode="before")
-    @classmethod
-    def clamp_alt(cls, value: object) -> object:
-        if isinstance(value, str) and len(value) > ETSY_MAX_ALT_TEXT_LENGTH:
-            return value[:ETSY_MAX_ALT_TEXT_LENGTH].rstrip()
-        return value
-
-
-class ImageAltAnalysis(BaseModel):
-    score: int = Field(ge=0, le=100)
-    images_with_alt: int = Field(ge=0)
-    images_total: int = Field(ge=0)
-    suggestions: list[ImageAltSuggestion]
-
-
 class SeoAnalysisResult(BaseModel):
     """Validated structured output of the SEO Analyzer (ai-agent-spec §3.1)."""
 
@@ -111,7 +85,6 @@ class SeoAnalysisResult(BaseModel):
     title_analysis: TitleAnalysis
     tags_analysis: TagsAnalysis
     description_analysis: DescriptionAnalysis
-    image_alt_analysis: ImageAltAnalysis
     priority: Literal["critical", "high", "medium", "low"]
     estimated_traffic_lift_percent: int
     competitor_gap_summary: str

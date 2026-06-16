@@ -181,7 +181,6 @@ def analyze_for_daily(listing_id: str, run_id: str) -> dict:
                     "price_usd": listing.price_usd,
                     "views_count": listing.views_count,
                     "favorites_count": listing.favorites_count,
-                    "image_alt_texts": listing.image_alt_texts or [],
                 }
             )
         except Exception as exc:

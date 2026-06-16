@@ -60,11 +60,6 @@ class SeoAnalysis(Base):
     first_paragraph_ok: Mapped[bool] = mapped_column(Boolean, default=True)
     optimized_description: Mapped[str | None] = mapped_column(Text)
 
-    # Image ALT-text recommendations
-    image_alt_score: Mapped[int | None] = mapped_column(SmallInteger)
-    # [{image_index, current_alt, suggested_alt, issue}]
-    image_alt_suggestions: Mapped[list | None] = mapped_column(JSONB)
-
     # Impact estimates
     estimated_traffic_lift: Mapped[int | None] = mapped_column(SmallInteger)
     competitor_gap_summary: Mapped[str | None] = mapped_column(Text)
