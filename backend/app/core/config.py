@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     # Deep analysis/synthesis (SEO, competitor, strategy) vs fast extraction
     AI_MODEL_PRIMARY: str = "claude-opus-4-8"
     AI_MODEL_FAST: str = "claude-haiku-4-5"
+    # When False the daily agent never runs on a schedule — analysis happens
+    # only when the user triggers it from the dashboard. Set True to re-enable
+    # the automatic 07:00 UTC fan-out.
+    DAILY_AGENT_ENABLED: bool = False
     VOYAGE_API_KEY: str = ""
     ETSY_CLIENT_ID: str = ""
     ETSY_CLIENT_SECRET: str = ""

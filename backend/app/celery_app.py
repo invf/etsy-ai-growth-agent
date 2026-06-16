@@ -27,10 +27,13 @@ celery_app.conf.update(
 )
 
 # Beat schedule — run under `celery beat -S redbeat.RedBeatScheduler`.
-# The daily agent fans out to every eligible store at 07:00 UTC.
-celery_app.conf.beat_schedule = {
-    "daily-agent-fan-out": {
-        "task": "tasks.agent.daily_agent_fan_out",
-        "schedule": crontab(hour=7, minute=0),
-    },
-}
+# The daily agent fans out to every eligible store at 07:00 UTC, but only when
+# DAILY_AGENT_ENABLED is set. By default it stays idle and analysis runs solely
+# on user request from the dashboard — no automatic token spend.
+if settings.DAILY_AGENT_ENABLED:
+    celery_app.conf.beat_schedule = {
+        "daily-agent-fan-out": {
+            "task": "tasks.agent.daily_agent_fan_out",
+            "schedule": crontab(hour=7, minute=0),
+        },
+    }
