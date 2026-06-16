@@ -288,7 +288,8 @@ def analyze_listing_seo(
         tool_name="record_seo_analysis",
         output_model=SeoAnalysisResult,
         thinking=True,
-        # Higher ceiling: the analysis now also returns a full rewritten
-        # description, which can be long on top of thinking + the rest.
-        max_tokens=16000,
+        # Adaptive thinking shares this budget with the tool-call output. The
+        # result is large — a full rewritten description plus per-photo ALT
+        # suggestions — so give generous headroom; 16k truncated the JSON.
+        max_tokens=32000,
     )

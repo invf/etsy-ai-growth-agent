@@ -108,6 +108,11 @@ class AIService:
             "messages": [{"role": "user", "content": user_message}],
             "tools": [tool_schema],
         }
+        # Non-streaming generation runs at roughly 60 tok/s, and with adaptive
+        # thinking a large max_tokens can approach the SDK's default 10-minute
+        # read timeout. Scale the timeout with the budget (with margin) so big
+        # structured outputs neither time out nor trip the SDK's streaming guard.
+        kwargs["timeout"] = max(600.0, max_tokens / 30)
         # Opus 4.8 / Fable 5: adaptive is the only accepted thinking value.
         # Forcing a specific tool is rejected while thinking is on
         # ("Thinking may not be enabled when tool_choice forces tool use"), so
@@ -125,6 +130,17 @@ class AIService:
         if response.stop_reason == "refusal":
             details = getattr(response, "stop_details", None)
             raise AIRefusalError(getattr(details, "category", None))
+
+        # With adaptive thinking, thinking + tool-call output share the max_tokens
+        # budget. If the model runs out mid-tool-call the SDK hands back a partial
+        # input dict that fails validation on a missing field — surface the real
+        # cause (truncation) instead of a misleading validation error.
+        if response.stop_reason == "max_tokens":
+            raise AIStructuredOutputError(
+                f"{tool_name} output truncated: hit max_tokens "
+                f"({max_tokens}) before completing the tool call. "
+                "Raise max_tokens or lower thinking effort."
+            )
 
         usage = AIUsage(
             model=model,

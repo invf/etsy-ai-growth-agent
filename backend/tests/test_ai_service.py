@@ -104,6 +104,15 @@ def test_raises_on_refusal():
         _call(service)
 
 
+def test_raises_when_truncated_by_max_tokens():
+    # A complete-looking tool block but stop_reason=max_tokens means the SDK
+    # may have salvaged a partial input — surface truncation, not validation.
+    service, _ = _service(_response([_tool_block()], stop_reason="max_tokens"))
+
+    with pytest.raises(AIStructuredOutputError, match="truncated"):
+        _call(service)
+
+
 def test_raises_when_tool_not_called():
     text_block = SimpleNamespace(type="text", text="I cannot use tools.")
     service, _ = _service(_response([text_block], stop_reason="end_turn"))
