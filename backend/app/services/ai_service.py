@@ -68,6 +68,18 @@ def compute_cost(usage: AIUsage) -> Decimal:
     return cost.quantize(Decimal("0.000001"))
 
 
+def _add_usage(a: AIUsage, b: AIUsage) -> AIUsage:
+    """Combine two billed calls (e.g. a thinking attempt + its forced retry)."""
+    return AIUsage(
+        model=b.model,
+        input_tokens=a.input_tokens + b.input_tokens,
+        output_tokens=a.output_tokens + b.output_tokens,
+        cache_read_tokens=a.cache_read_tokens + b.cache_read_tokens,
+        cache_write_tokens=a.cache_write_tokens + b.cache_write_tokens,
+        cost_usd=a.cost_usd + b.cost_usd,
+    )
+
+
 class AIService:
     def __init__(self, client: anthropic.Anthropic | None = None):
         self._client = client
@@ -126,7 +138,41 @@ class AIService:
             kwargs["tool_choice"] = {"type": "tool", "name": tool_name}
 
         response = self.client.messages.create(**kwargs)
+        result, usage = self._structured_result(
+            response, model, tool_name, output_model, max_tokens
+        )
+        if result is not None:
+            return result, usage
 
+        # The model answered without calling the tool. With thinking on we can't
+        # force the tool (the API rejects it), so the model is free to reply in
+        # prose and skip nested fields like the per-photo ALT suggestions. Retry
+        # once with thinking off and the tool forced — guaranteed structured
+        # output. (The first, wasted call still bills, so fold its usage in.)
+        if not thinking:
+            raise AIStructuredOutputError(f"Model did not call {tool_name}")
+
+        kwargs.pop("thinking", None)
+        kwargs["tool_choice"] = {"type": "tool", "name": tool_name}
+        retry = self.client.messages.create(**kwargs)
+        result, retry_usage = self._structured_result(
+            retry, model, tool_name, output_model, max_tokens
+        )
+        if result is not None:
+            return result, _add_usage(usage, retry_usage)
+
+        raise AIStructuredOutputError(f"Model did not call {tool_name}")
+
+    def _structured_result(
+        self,
+        response: Any,
+        model: str,
+        tool_name: str,
+        output_model: type[T],
+        max_tokens: int,
+    ) -> tuple[T | None, AIUsage]:
+        """Validate a forced-tool response. Returns (model, usage) when the tool
+        was called, (None, usage) when it wasn't; raises on refusal/truncation."""
         if response.stop_reason == "refusal":
             details = getattr(response, "stop_details", None)
             raise AIRefusalError(getattr(details, "category", None))
@@ -162,4 +208,4 @@ class AIService:
                         f"{tool_name} output failed validation: {exc}"
                     ) from exc
 
-        raise AIStructuredOutputError(f"Model did not call {tool_name}")
+        return None, usage

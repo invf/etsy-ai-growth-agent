@@ -121,6 +121,43 @@ def test_raises_when_tool_not_called():
         _call(service)
 
 
+def test_thinking_falls_back_to_forced_tool():
+    # With thinking on the model may answer in prose without calling the tool.
+    # The gateway retries once with the tool forced (thinking off) and combines
+    # the usage of both billed calls.
+    no_tool = _response(
+        [SimpleNamespace(type="text", text="here is my analysis")],
+        stop_reason="end_turn",
+    )
+    forced = _response([_tool_block()])
+    client = MagicMock()
+    client.messages.create.side_effect = [no_tool, forced]
+    service = AIService(client=client)
+
+    result, usage = _call(service, thinking=True)
+
+    assert isinstance(result, Answer)
+    assert client.messages.create.call_count == 2
+    retry_kwargs = client.messages.create.call_args_list[1].kwargs
+    assert retry_kwargs["tool_choice"] == {"type": "tool", "name": "record_answer"}
+    assert "thinking" not in retry_kwargs
+    # Usage is the sum of both calls (each billed input=1000, output=500).
+    assert usage.input_tokens == 2000
+    assert usage.output_tokens == 1000
+
+
+def test_thinking_fallback_still_raises_if_tool_never_called():
+    text = SimpleNamespace(type="text", text="prose")
+    no_tool = _response([text], stop_reason="end_turn")
+    client = MagicMock()
+    client.messages.create.side_effect = [no_tool, no_tool]
+    service = AIService(client=client)
+
+    with pytest.raises(AIStructuredOutputError, match="did not call"):
+        _call(service, thinking=True)
+    assert client.messages.create.call_count == 2
+
+
 def test_raises_on_invalid_tool_payload():
     bad = _tool_block(payload={"label": "ok", "confidence": "not-a-number-at-all"})
     service, _ = _service(_response([bad]))
