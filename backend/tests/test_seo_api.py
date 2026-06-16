@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from unittest.mock import MagicMock
 
 import pytest
@@ -56,7 +56,9 @@ def _db(listing=None, store=None, analysis=None, running=None):
             chain = q.filter_by.return_value.order_by.return_value
             chain.first.return_value = analysis
         elif model is AgentRun:
-            q.filter.return_value.first.return_value = running
+            q.filter.return_value.all.return_value = (
+                [running] if running is not None else []
+            )
         return q
 
     db.query.side_effect = query
@@ -155,7 +157,7 @@ def test_get_seo_includes_optimized_description(user):
 
 
 def test_trigger_seo_409_when_already_running(user):
-    running = MagicMock(id=uuid.uuid4())
+    running = MagicMock(id=uuid.uuid4(), created_at=datetime.now(timezone.utc))
     client = _client(
         _db(listing=_listing(), store=MagicMock(), running=running), user
     )
@@ -189,6 +191,27 @@ def test_trigger_seo_429_when_daily_cap_exceeded(user, credits):
     detail = resp.json()["detail"]
     assert detail["code"] == "DAILY_LIMIT_EXCEEDED"
     assert detail["details"] == {"daily_cap": 30, "daily_used": 30}
+
+
+def test_trigger_seo_supersedes_stale_run(user, credits, monkeypatch):
+    from app.tasks import seo as seo_mod
+
+    monkeypatch.setattr(seo_mod.analyze_single, "apply_async", MagicMock())
+
+    stale = MagicMock(
+        id=uuid.uuid4(),
+        user_id=user.id,
+        created_at=datetime.now(timezone.utc) - timedelta(minutes=30),
+    )
+    client = _client(_db(listing=_listing(), store=MagicMock(), running=stale), user)
+
+    resp = client.post(f"/v1/listings/{uuid.uuid4()}/seo/analyze")
+
+    # The stalled run does not block: a fresh analysis is queued and the old
+    # run is failed + its credit hold released.
+    assert resp.status_code == 202
+    assert stale.status == "failed"
+    credits.release.assert_called_once_with(str(user.id), str(stale.id))
 
 
 def test_trigger_seo_queues_task_and_returns_run_id(user, credits, monkeypatch):

@@ -1,5 +1,6 @@
 import json
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -16,6 +17,10 @@ from app.schemas.seo import SeoApplyIn
 from app.services.credit_service import CREDITS_PER_OPERATION, get_credit_service
 
 SEO_ANALYSIS_COST = CREDITS_PER_OPERATION["seo_analysis_deep"]
+# A run still pending/running past this is treated as stalled (worker died or
+# never picked it up), not as a real in-progress analysis. Analysis itself takes
+# well under a minute.
+STALE_RUN_AFTER = timedelta(minutes=5)
 
 router = APIRouter(tags=["seo"])
 
@@ -112,26 +117,38 @@ def trigger_seo_analysis(
 ):
     listing = _get_owned_listing(listing_id, current_user, db)
 
-    running = (
+    in_progress = (
         db.query(AgentRun)
         .filter(
             AgentRun.store_id == listing.store_id,
             AgentRun.run_type == "seo_analysis",
             AgentRun.status.in_(["pending", "running"]),
         )
-        .first()
+        .all()
     )
-    if running:
+    now = datetime.now(timezone.utc)
+    fresh = [r for r in in_progress if now - r.created_at < STALE_RUN_AFTER]
+    if fresh:
         raise HTTPException(
             409,
             detail={
                 "code": "ANALYSIS_IN_PROGRESS",
                 "message": "SEO analysis already running for this store",
-                "details": {"run_id": str(running.id)},
+                "details": {"run_id": str(fresh[0].id)},
             },
         )
-
     credits = get_credit_service()
+    # Stalled runs would block this store forever — fail them and free the hold.
+    for stale in in_progress:
+        stale.status = "failed"
+        stale.error_message = "Run stalled; superseded by a new analysis"
+        try:
+            credits.release(str(stale.user_id), str(stale.id))
+        except Exception:
+            pass
+    if in_progress:
+        db.flush()
+
     run = AgentRun(
         id=uuid.uuid4(),
         store_id=listing.store_id,
@@ -186,7 +203,10 @@ def trigger_seo_analysis(
         )
 
     db.add(run)
-    db.flush()
+    # Commit before dispatching: the Celery worker uses a separate DB session
+    # and won't see an uncommitted row. A flush-then-dispatch race left runs
+    # "skipped: run not found" and the UI stuck on "Analyzing… 0%".
+    db.commit()
 
     from app.tasks.seo import analyze_single
 
