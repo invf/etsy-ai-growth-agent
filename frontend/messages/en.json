@@ -126,6 +126,7 @@
       "running": "Analyzing... {progress}%",
       "failed": "Analysis failed. Please try again.",
       "noCredits": "Not enough credits for this analysis.",
+      "dailyLimit": "Daily analysis limit reached. It resets at midnight UTC.",
       "alreadyRunning": "An analysis is already running for this store."
     },
     "createOptimizations": {

@@ -96,6 +96,8 @@ export default function AnalyzeButton({
     } catch (err) {
       if (err instanceof ApiError && err.code === 'INSUFFICIENT_CREDITS') {
         setState({ phase: 'error', message: t('noCredits') })
+      } else if (err instanceof ApiError && err.code === 'DAILY_LIMIT_EXCEEDED') {
+        setState({ phase: 'error', message: t('dailyLimit') })
       } else if (err instanceof ApiError && err.code === 'ANALYSIS_IN_PROGRESS') {
         setState({ phase: 'error', message: t('alreadyRunning') })
       } else {

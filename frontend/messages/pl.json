@@ -126,6 +126,7 @@
       "running": "Analizowanie... {progress}%",
       "failed": "Analiza nie powiodła się. Spróbuj ponownie.",
       "noCredits": "Za mało kredytów na tę analizę.",
+      "dailyLimit": "Osiągnięto dzienny limit analiz. Resetuje się o północy UTC.",
       "alreadyRunning": "Analiza dla tego sklepu już trwa."
     },
     "createOptimizations": {

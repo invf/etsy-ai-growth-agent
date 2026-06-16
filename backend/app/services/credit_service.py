@@ -38,7 +38,10 @@ CREDITS_PER_OPERATION = {
 # Hard daily credit cap per tier (monetization-spec §2.2) —
 # prevents burning a monthly allotment in days via runaway loops
 DAILY_CREDIT_CAP = {
-    "trial": 10,
+    # Trial is generous on purpose: a seller evaluating the product should be
+    # able to analyze their whole shop, not ~5 listings. Cost is gated by the
+    # time-boxed trial and total credits, not by this per-day runaway guard.
+    "trial": 100,
     "starter": 30,
     "growth": 60,
     "pro": 150,

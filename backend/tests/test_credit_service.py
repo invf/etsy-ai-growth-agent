@@ -39,29 +39,32 @@ def test_reserve_denies_when_balance_short():
 
 
 def test_reserve_denies_when_daily_cap_hit():
-    service = _service()  # trial cap = 10
+    service = _service()
+    cap = DAILY_CREDIT_CAP["trial"]
 
-    assert service.reserve("u1", 5, "r1", balance=100, tier="trial") == "ok"
-    assert service.reserve("u1", 5, "r2", balance=100, tier="trial") == "ok"
-    result = service.reserve("u1", 5, "r3", balance=100, tier="trial")
+    # Fill the daily cap exactly (balance kept ample so the cap is the limiter).
+    assert service.reserve("u1", cap, "r1", balance=10_000, tier="trial") == "ok"
+    result = service.reserve("u1", 1, "r2", balance=10_000, tier="trial")
 
     assert result == "daily_cap_exceeded"
-    assert service.daily_used("u1") == 10
+    assert service.daily_used("u1") == cap
 
 
 def test_daily_cap_counts_settled_spend():
     """Settled (actually burned) credits stay in the daily counter."""
     service = _service()
-    user = _user(balance=100)
+    user = _user(balance=10_000)
     uid = str(user.id)
+    cap = DAILY_CREDIT_CAP["trial"]
 
-    assert service.reserve(uid, 5, "r1", balance=100, tier="trial") == "ok"
+    assert service.reserve(uid, cap, "r1", balance=10_000, tier="trial") == "ok"
     service.settle("r1", user)
-    assert service.reserve(uid, 5, "r2", balance=95, tier="trial") == "ok"
-    service.settle("r2", user)
 
-    assert service.daily_used(uid) == 10
-    assert service.reserve(uid, 5, "r3", balance=90, tier="trial") == "daily_cap_exceeded"
+    assert service.daily_used(uid) == cap
+    assert (
+        service.reserve(uid, 1, "r2", balance=user.credits_balance, tier="trial")
+        == "daily_cap_exceeded"
+    )
 
 
 def test_release_refunds_daily_counter():
