@@ -84,6 +84,44 @@ def credits(monkeypatch):
     return service
 
 
+@pytest.fixture(autouse=True)
+def _no_market(monkeypatch):
+    # Keep the analysis tasks off the network: no real Etsy competitor search.
+    monkeypatch.setattr(
+        seo_mod, "search_active_listings", MagicMock(return_value={"results": []})
+    )
+
+
+def test_gather_market_context_extracts_competitors_and_trending(monkeypatch):
+    listing = _listing()  # own tags: mug, ceramic; etsy_listing_id 111
+    page = {
+        "results": [
+            {"listing_id": 111, "title": "Own", "tags": ["mug"]},  # skipped (own)
+            {"listing_id": 2, "title": "Rival A", "tags": ["coffee mug", "ceramic"]},
+            {"listing_id": 3, "title": "Rival B", "tags": ["coffee mug", "gift"]},
+        ]
+    }
+    monkeypatch.setattr(seo_mod, "search_active_listings", lambda **kw: page)
+
+    competitors, trending = seo_mod._gather_market_context(listing)
+
+    assert [c["title"] for c in competitors] == ["Rival A", "Rival B"]
+    # "coffee mug" appears twice and isn't an own tag → top trending;
+    # "ceramic" is an own tag → excluded.
+    assert trending[0] == "coffee mug"
+    assert "ceramic" not in trending
+
+
+def test_gather_market_context_returns_empty_on_search_failure(monkeypatch):
+    def boom(**kw):
+        raise RuntimeError("etsy down")
+
+    monkeypatch.setattr(seo_mod, "search_active_listings", boom)
+    competitors, trending = seo_mod._gather_market_context(_listing())
+    assert competitors == []
+    assert trending == []
+
+
 def test_analyze_single_persists_analysis_and_completes_run(monkeypatch):
     run, listing = _run(), _listing()
     db = _wire_db(monkeypatch, run, listing)

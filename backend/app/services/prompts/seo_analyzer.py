@@ -1,6 +1,7 @@
 """SEO Analyzer prompt + tool schema (ai-agent-spec §3.1).
 
-Deep per-listing SEO analysis on the primary model with adaptive thinking.
+Deep per-listing SEO analysis on the primary model, grounded in real Etsy
+competitor/keyword search data passed in by the caller.
 """
 
 from typing import Any
@@ -208,7 +209,11 @@ def analyze_listing_seo(
     trending_keywords: list[str] | None = None,
     ai: AIService | None = None,
 ) -> tuple[SeoAnalysisResult, AIUsage]:
-    """Full SEO analysis for one listing; competitor/trend context comes from RAG."""
+    """Full SEO analysis for one listing.
+
+    competitor_context / trending_keywords are real Etsy marketplace data the
+    caller gathers from a keyword search; empty falls back to listing-only.
+    """
     ai = ai or AIService()
     return ai.call_with_structured_output(
         model=settings.AI_MODEL_PRIMARY,

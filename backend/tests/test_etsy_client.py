@@ -34,6 +34,26 @@ def test_build_oauth_url_contains_required_params():
     assert params["code_challenge"] == [compute_code_challenge("my-verifier")]
 
 
+def test_search_active_listings_is_public_keyword_search(monkeypatch):
+    monkeypatch.setattr(etsy_client, "_throttle", lambda: None)
+    response = MagicMock()
+    response.json.return_value = {"count": 2, "results": []}
+    get = MagicMock(return_value=response)
+    monkeypatch.setattr(etsy_client.httpx, "get", get)
+
+    result = etsy_client.search_active_listings("ceramic mug", taxonomy_id=1, limit=10)
+
+    assert result == {"count": 2, "results": []}
+    args, kwargs = get.call_args
+    assert args[0].endswith("/application/listings/active")
+    assert kwargs["params"]["keywords"] == "ceramic mug"
+    assert kwargs["params"]["taxonomy_id"] == 1
+    assert kwargs["params"]["sort_on"] == "score"
+    # Public endpoint: x-api-key only, no Authorization bearer
+    assert "Authorization" not in kwargs["headers"]
+    assert "x-api-key" in kwargs["headers"]
+
+
 def test_update_listing_joins_tags_and_authenticates(monkeypatch):
     monkeypatch.setattr(etsy_client, "_throttle", lambda: None)
     response = MagicMock()

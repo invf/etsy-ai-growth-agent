@@ -31,6 +31,11 @@ def _api_headers(access_token: str) -> dict[str, str]:
     }
 
 
+def _public_headers() -> dict[str, str]:
+    """Headers for public (no-OAuth) v3 endpoints like marketplace search."""
+    return {"x-api-key": f"{settings.ETSY_CLIENT_ID}:{settings.ETSY_CLIENT_SECRET}"}
+
+
 def compute_code_challenge(code_verifier: str) -> str:
     """PKCE S256: base64url(sha256(code_verifier)) without padding."""
     digest = hashlib.sha256(code_verifier.encode("ascii")).digest()
@@ -99,6 +104,38 @@ def get_shop_listings(
         f"{ETSY_API_BASE}/application/shops/{shop_id}/listings/active",
         headers=_api_headers(access_token),
         params={"limit": limit, "offset": offset, "includes": "Images"},
+        timeout=30,
+    )
+    resp.raise_for_status()
+    return resp.json()
+
+
+def search_active_listings(
+    keywords: str,
+    limit: int = 24,
+    taxonomy_id: int | None = None,
+    sort_on: str = "score",
+    sort_order: str = "down",
+) -> dict:
+    """Public marketplace search: {count, results: [...]}.
+
+    Powers competitor/keyword context for SEO analysis — finds the listings a
+    buyer sees when they search ``keywords``. Public endpoint (x-api-key only,
+    no OAuth). ``sort_on=score`` returns Etsy's own relevancy ranking.
+    """
+    _throttle()
+    params: dict[str, str | int] = {
+        "keywords": keywords,
+        "limit": limit,
+        "sort_on": sort_on,
+        "sort_order": sort_order,
+    }
+    if taxonomy_id:
+        params["taxonomy_id"] = taxonomy_id
+    resp = httpx.get(
+        f"{ETSY_API_BASE}/application/listings/active",
+        headers=_public_headers(),
+        params=params,
         timeout=30,
     )
     resp.raise_for_status()

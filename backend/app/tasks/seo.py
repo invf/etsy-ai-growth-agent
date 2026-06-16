@@ -1,4 +1,6 @@
+import logging
 import time
+from collections import Counter
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
@@ -12,8 +14,59 @@ from app.db.session import get_db_session
 from app.schemas.seo import SeoAnalysisResult
 from app.services.ai_service import AIRefusalError, AIUsage
 from app.services.credit_service import get_credit_service
+from app.services.etsy_client import search_active_listings
 from app.services.notification_service import check_and_notify_low_credits
 from app.services.prompts.seo_analyzer import analyze_listing_seo
+
+logger = logging.getLogger(__name__)
+
+# How many competitor listings and trending tags to feed the analyzer
+COMPETITOR_LIMIT = 12
+TRENDING_LIMIT = 15
+
+
+def _gather_market_context(listing: Listing) -> tuple[list[dict], list[str]]:
+    """Real top-competitor listings + the tags they use, from Etsy search.
+
+    Grounds the analysis in the actual market instead of the model guessing.
+    Best-effort: any failure returns ([], []) so the analysis still runs.
+    """
+    own_tags = {t.lower() for t in (listing.tags or [])}
+    seed = (listing.tags or [None])[0] or " ".join((listing.title or "").split()[:4])
+    if not seed:
+        return [], []
+
+    try:
+        page = search_active_listings(
+            keywords=seed, taxonomy_id=listing.taxonomy_id, limit=24
+        )
+    except Exception as exc:
+        logger.warning("competitor search failed for %s: %s", listing.id, exc)
+        return [], []
+
+    competitors: list[dict] = []
+    tag_counts: Counter[str] = Counter()
+    for item in page.get("results") or []:
+        if item.get("listing_id") == listing.etsy_listing_id:
+            continue  # skip the seller's own listing
+        tags = [t for t in (item.get("tags") or []) if isinstance(t, str)]
+        competitors.append(
+            {
+                "title": item.get("title") or "",
+                "tags": tags,
+                "favorites": item.get("num_favorers") or 0,
+            }
+        )
+        for tag in tags:
+            tag_counts[tag.lower()] += 1
+        if len(competitors) >= COMPETITOR_LIMIT:
+            break
+
+    # Tags competitors use often that this listing is missing = trend signal
+    trending = [
+        tag for tag, _ in tag_counts.most_common(40) if tag not in own_tags
+    ][:TRENDING_LIMIT]
+    return competitors, trending
 
 
 def _build_seo_row(
@@ -98,8 +151,7 @@ def analyze_single(self, listing_id: str, run_id: str) -> dict:
         db.flush()
 
         try:
-            # Competitor/trend context comes from the RAG pipeline (Week 5+);
-            # until then the analyzer runs on listing data alone
+            competitor_context, trending_keywords = _gather_market_context(listing)
             result, usage = analyze_listing_seo(
                 {
                     "title": listing.title,
@@ -108,7 +160,9 @@ def analyze_single(self, listing_id: str, run_id: str) -> dict:
                     "price_usd": listing.price_usd,
                     "views_count": listing.views_count,
                     "favorites_count": listing.favorites_count,
-                }
+                },
+                competitor_context=competitor_context,
+                trending_keywords=trending_keywords,
             )
         except AIRefusalError as exc:
             return _fail_run(db, run, f"AI refused the request: {exc}", started)
