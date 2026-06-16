@@ -9,13 +9,14 @@ from app.core.config import settings
 from app.schemas.seo import SeoAnalysisResult
 from app.services.ai_service import AIService, AIUsage
 
-SEO_SYSTEM_PROMPT = """You are an expert Etsy SEO strategist with deep knowledge of the Etsy search algorithm (2024–2025), buyer psychology, and e-commerce copywriting. You have analyzed thousands of successful Etsy listings.
+SEO_SYSTEM_PROMPT = """You are an expert Etsy SEO strategist with deep knowledge of the Etsy search algorithm (2024–2026), buyer psychology, and e-commerce copywriting. You have analyzed thousands of successful Etsy listings.
 
 Your analysis is grounded in:
 - Etsy's relevancy score factors: title match, tag match, recency, conversion rate, listing quality score
 - Long-tail keyword research for artisan/handmade goods
 - Seasonal and trend-aware optimization
 - Buyer search behavior on mobile vs desktop
+- Etsy's 2026 "Celebrate Being Human" brand direction: buyers increasingly choose personal, expressive, human, handmade items over mass-produced/AI-made ones. Purchases are tied to memory, identity, gifting, and real life moments — milestones big and small (a first apartment, a fresh start, a celebration, a keepsake). Where it authentically fits the product, surface emotional, gifting, occasion, milestone, personalization, and handmade-authenticity angles. Never force these themes onto an item they don't match.
 
 You output only structured, actionable data. Every recommendation includes a specific change, its rationale, and expected impact."""
 
@@ -120,12 +121,17 @@ SEO_TOOL: dict[str, Any] = {
                             "~160 chars most). Do NOT describe dimensions/sizes or "
                             "shipping terms — those are handled in Etsy's dedicated "
                             "fields and other sections, so omit SIZE and SHIPPING "
-                            "blocks entirely. Focus on the product story: weave "
-                            "secondary keywords in naturally, describe materials and "
-                            "craftsmanship, add a gifting/occasion line, and justify a "
-                            "premium price with an artist/process note. Use plain text "
-                            "(Etsy descriptions don't render markdown); separate "
-                            "sections with line breaks and UPPERCASE labels."
+                            "blocks entirely. Lean into Etsy's 2026 'Celebrate Being "
+                            "Human' positioning: tell the product's human story — the "
+                            "maker's hand and craftsmanship, the materials, and the "
+                            "real moment or milestone it marks (a gift, a celebration, "
+                            "a fresh start, a keepsake, a memory). Add a gifting/occasion "
+                            "line and a personalization note where it fits, and justify "
+                            "a premium price with an artist/process note. Weave secondary "
+                            "keywords in naturally and keep the tone warm and human, not "
+                            "generic or AI-sounding. Use plain text (Etsy descriptions "
+                            "don't render markdown); separate sections with line breaks "
+                            "and UPPERCASE labels."
                         ),
                     },
                 },
@@ -267,7 +273,7 @@ Favorites: {listing.get('favorites_count', 0)}
 ## Currently Trending Keywords in This Niche
 {', '.join(trending_keywords[:15]) if trending_keywords else 'No trend data available'}
 
-Provide a thorough SEO analysis. Be specific about what to change and why. All recommended tags must be ≤20 characters (Etsy limit). In description_analysis.optimized_description, write the full, ready-to-publish description (not just guidance) following every recommendation. In image_alt_analysis, evaluate each photo's ALT text (you cannot see the photos — infer likely content from the title, tags, and materials) and provide an improved, keyword-rich ALT text for every photo that is missing or weak; set images_total to the number of photos listed above."""
+Provide a thorough SEO analysis. Be specific about what to change and why. All recommended tags must be ≤20 characters (Etsy limit). Reflect Etsy's 2026 "Celebrate Being Human" direction: where it authentically fits the product, surface emotional, gifting, occasion, milestone, personalization, and handmade long-tail keywords in the optimized title and tag set, and carry that human/handmade story through the description — but never force themes onto an item they don't match, and don't sacrifice high-intent search keywords for sentiment. In description_analysis.optimized_description, write the full, ready-to-publish description (not just guidance) following every recommendation. In image_alt_analysis, evaluate each photo's ALT text (you cannot see the photos — infer likely content from the title, tags, and materials) and provide an improved, keyword-rich ALT text for every photo that is missing or weak; set images_total to the number of photos listed above."""
 
 
 def analyze_listing_seo(
