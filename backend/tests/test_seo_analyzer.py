@@ -41,8 +41,21 @@ def _valid_payload() -> dict:
             "keyword_density_ok": True,
             "missing_sections": ["care instructions"],
             "first_paragraph_optimized": False,
-            "recommended_additions": ["Add dimensions in first paragraph"],
-            "optimized_description": "Handmade ceramic mug. SIZE: 10cm. CARE: hand wash.",
+            "recommended_additions": ["Lead the first paragraph with the keyword"],
+            "optimized_description": "Handmade ceramic mug for cozy mornings. CARE: hand wash.",
+        },
+        "image_alt_analysis": {
+            "score": 40,
+            "images_with_alt": 0,
+            "images_total": 2,
+            "suggestions": [
+                {
+                    "image_index": 0,
+                    "current_alt": "",
+                    "suggested_alt": "Handmade ceramic coffee mug in matte white, front view",
+                    "issue": "No ALT text set",
+                }
+            ],
         },
         "priority": "high",
         "estimated_traffic_lift_percent": 25,
@@ -102,6 +115,14 @@ def test_build_user_message_handles_missing_context():
     msg = build_seo_user_message({"title": "X"}, [], [])
     assert "No competitor data available" in msg
     assert "No trend data available" in msg
+    assert "No photo data available" in msg
+
+
+def test_build_user_message_includes_photo_alt_texts():
+    listing = {"title": "Mug", "image_alt_texts": ["Front view", ""]}
+    msg = build_seo_user_message(listing, [], [])
+    assert "Photo 0 ALT: Front view" in msg
+    assert "Photo 1 ALT: (no ALT text)" in msg
 
 
 def test_analyze_listing_seo_uses_primary_model_with_thinking():

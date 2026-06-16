@@ -60,6 +60,9 @@ class Listing(Base):
     # Images
     main_image_url: Mapped[str | None] = mapped_column(Text)
     image_urls: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
+    # Etsy ALT text per image, positionally aligned with image_urls (empty
+    # string where a photo has no ALT). Used by the SEO analyzer.
+    image_alt_texts: Mapped[list[str]] = mapped_column(ARRAY(Text), default=list)
     image_count: Mapped[int] = mapped_column(SmallInteger, default=0)
 
     # Etsy analytics

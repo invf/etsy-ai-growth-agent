@@ -64,6 +64,10 @@ def _analysis_to_dict(analysis: SeoAnalysis) -> dict:
             "first_paragraph_ok": analysis.first_paragraph_ok,
             "optimized_description": analysis.optimized_description,
         },
+        "image_alt_analysis": {
+            "score": analysis.image_alt_score,
+            "suggestions": analysis.image_alt_suggestions or [],
+        },
         "estimated_traffic_lift_pct": analysis.estimated_traffic_lift,
         "competitor_gap_summary": analysis.competitor_gap_summary,
         "from_cache": analysis.from_cache,
@@ -289,8 +293,8 @@ def apply_seo_analysis(
                 old_value=listing.description,
                 new_value=analysis.optimized_description,
                 change_summary=(
-                    "Rewrote the description with keyword-led opening and "
-                    "SIZE/MATERIALS/SHIPPING/CARE sections"
+                    "Rewrote the description with a keyword-led opening, "
+                    "product story, and MATERIALS/CARE sections"
                 ),
                 impact_estimate={"seo_score_delta": analysis.description_score},
                 status="pending",

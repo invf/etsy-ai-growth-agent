@@ -166,6 +166,17 @@
         "copy": "Copy",
         "copied": "Copied!"
       },
+      "images": {
+        "heading": "Image ALT text",
+        "hint": "Etsy has no API to update ALT text — copy these into each photo's “Add alt text” field on Etsy.",
+        "photo": "Photo {n}",
+        "current": "Current",
+        "noAlt": "(no ALT text)",
+        "suggested": "Suggested ALT text",
+        "allGood": "Photo ALT texts look good.",
+        "copy": "Copy",
+        "copied": "Copied!"
+      },
       "competitorGap": "Competitor gap"
     }
   },
