@@ -175,6 +175,7 @@
         "noAlt": "(no ALT text)",
         "suggested": "Suggested ALT text",
         "allGood": "Photo ALT texts look good.",
+        "needsSync": "No ALT suggestions — sync this listing (the photos' ALT text wasn't captured yet), then re-run the analysis.",
         "copy": "Copy",
         "copied": "Copied!"
       },

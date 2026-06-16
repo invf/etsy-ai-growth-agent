@@ -175,6 +175,7 @@
         "noAlt": "(brak tekstu ALT)",
         "suggested": "Sugerowany tekst ALT",
         "allGood": "Teksty ALT zdjęć wyglądają dobrze.",
+        "needsSync": "Brak sugestii ALT — zsynchronizuj ofertę (tekst ALT zdjęć nie został jeszcze pobrany), a następnie uruchom analizę ponownie.",
         "copy": "Kopiuj",
         "copied": "Skopiowano!"
       },

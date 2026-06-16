@@ -208,8 +208,10 @@ export default function SeoAnalysisPanel({ analysis }: { analysis: SeoAnalysis }
                 </li>
               ))}
             </ul>
-          ) : (
+          ) : (images.score ?? 0) >= 50 ? (
             <p className="mt-2 text-sm text-zinc-500">{t('images.allGood')}</p>
+          ) : (
+            <p className="mt-2 text-sm text-zinc-500">{t('images.needsSync')}</p>
           )}
         </section>
       )}
