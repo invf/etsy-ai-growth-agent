@@ -1,9 +1,6 @@
 from decimal import Decimal
 from unittest.mock import MagicMock
 
-import pytest
-from pydantic import ValidationError
-
 from app.schemas.seo import SeoAnalysisResult
 from app.services.ai_service import AIUsage
 from app.services.prompts.seo_analyzer import (
@@ -69,18 +66,28 @@ def test_seo_result_validates_clean_payload():
     assert result.tags_analysis.full_optimized_tag_set[0] == "ceramic coffee mug"
 
 
-def test_seo_result_rejects_tag_over_20_chars():
+def test_seo_result_drops_tag_over_20_chars():
+    # An over-length tag must not fail the whole analysis — it's dropped instead.
     payload = _valid_payload()
-    payload["tags_analysis"]["full_optimized_tag_set"] = ["x" * 21]
-    with pytest.raises(ValidationError, match="20-char limit"):
-        SeoAnalysisResult.model_validate(payload)
+    payload["tags_analysis"]["full_optimized_tag_set"] = ["x" * 21, "good tag"]
+    result = SeoAnalysisResult.model_validate(payload)
+    assert result.tags_analysis.full_optimized_tag_set == ["good tag"]
 
 
-def test_seo_result_rejects_more_than_13_tags():
+def test_seo_result_caps_tags_at_13():
     payload = _valid_payload()
     payload["tags_analysis"]["full_optimized_tag_set"] = [f"tag {i}" for i in range(14)]
-    with pytest.raises(ValidationError):
-        SeoAnalysisResult.model_validate(payload)
+    result = SeoAnalysisResult.model_validate(payload)
+    assert len(result.tags_analysis.full_optimized_tag_set) == 13
+
+
+def test_seo_result_clamps_long_title_and_alt():
+    payload = _valid_payload()
+    payload["title_analysis"]["optimized_title"] = "T" * 200
+    payload["image_alt_analysis"]["suggestions"][0]["suggested_alt"] = "A" * 300
+    result = SeoAnalysisResult.model_validate(payload)
+    assert len(result.title_analysis.optimized_title) == 140
+    assert len(result.image_alt_analysis.suggestions[0].suggested_alt) == 250
 
 
 def test_tool_schema_enforces_etsy_tag_limits():

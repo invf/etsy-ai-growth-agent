@@ -12,6 +12,10 @@ class TagReplacement(BaseModel):
     reason: str
 
 
+ETSY_MAX_TITLE_LENGTH = 140
+MAX_MISSING_TAGS = 5
+
+
 class TitleAnalysis(BaseModel):
     score: int = Field(ge=0, le=100)
     character_count: int
@@ -20,8 +24,16 @@ class TitleAnalysis(BaseModel):
         "first_3_words", "first_half", "second_half", "absent"
     ]
     issues: list[str]
-    optimized_title: str = Field(max_length=140)
+    optimized_title: str = Field(max_length=ETSY_MAX_TITLE_LENGTH)
     title_change_rationale: str
+
+    @field_validator("optimized_title", mode="before")
+    @classmethod
+    def clamp_title(cls, value: object) -> object:
+        # Don't fail the whole analysis over a slightly-too-long title.
+        if isinstance(value, str) and len(value) > ETSY_MAX_TITLE_LENGTH:
+            return value[:ETSY_MAX_TITLE_LENGTH].rstrip()
+        return value
 
 
 class TagsAnalysis(BaseModel):
@@ -29,18 +41,30 @@ class TagsAnalysis(BaseModel):
     current_tag_count: int
     unused_slots: int
     weak_tags: list[str]
-    missing_high_value_tags: list[str] = Field(max_length=5)
+    missing_high_value_tags: list[str] = Field(max_length=MAX_MISSING_TAGS)
     replacement_tags: list[TagReplacement]
     full_optimized_tag_set: list[str] = Field(max_length=ETSY_MAX_TAGS)
 
-    @field_validator("full_optimized_tag_set")
+    @field_validator("full_optimized_tag_set", mode="before")
     @classmethod
-    def tags_within_etsy_limit(cls, tags: list[str]) -> list[str]:
-        too_long = [t for t in tags if len(t) > ETSY_MAX_TAG_LENGTH]
-        if too_long:
-            raise ValueError(
-                f"tags exceed Etsy's {ETSY_MAX_TAG_LENGTH}-char limit: {too_long}"
-            )
+    def clean_optimized_tags(cls, tags: object) -> object:
+        # Etsy caps tags at 13 of ≤20 chars. The model only gets this as a hint,
+        # so enforce it here by dropping offenders instead of failing the run.
+        if not isinstance(tags, list):
+            return tags
+        cleaned: list[str] = []
+        for tag in tags:
+            if isinstance(tag, str):
+                tag = tag.strip()
+                if tag and len(tag) <= ETSY_MAX_TAG_LENGTH:
+                    cleaned.append(tag)
+        return cleaned[:ETSY_MAX_TAGS]
+
+    @field_validator("missing_high_value_tags", mode="before")
+    @classmethod
+    def cap_missing_tags(cls, tags: object) -> object:
+        if isinstance(tags, list):
+            return [t for t in tags if isinstance(t, str)][:MAX_MISSING_TAGS]
         return tags
 
 
@@ -64,6 +88,13 @@ class ImageAltSuggestion(BaseModel):
     current_alt: str
     suggested_alt: str = Field(max_length=ETSY_MAX_ALT_TEXT_LENGTH)
     issue: str
+
+    @field_validator("suggested_alt", mode="before")
+    @classmethod
+    def clamp_alt(cls, value: object) -> object:
+        if isinstance(value, str) and len(value) > ETSY_MAX_ALT_TEXT_LENGTH:
+            return value[:ETSY_MAX_ALT_TEXT_LENGTH].rstrip()
+        return value
 
 
 class ImageAltAnalysis(BaseModel):
