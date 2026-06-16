@@ -135,7 +135,7 @@ def analyze_single(self, listing_id: str, run_id: str) -> dict:
                 cache_write_tokens=usage.cache_write_tokens,
                 cost_usd=usage.cost_usd,
                 duration_ms=duration_ms,
-                thinking_used=True,
+                thinking_used=False,
             )
         )
 

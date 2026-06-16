@@ -293,9 +293,13 @@ def analyze_listing_seo(
         tool_schema=SEO_TOOL,
         tool_name="record_seo_analysis",
         output_model=SeoAnalysisResult,
-        thinking=True,
-        # Adaptive thinking shares this budget with the tool-call output. The
-        # result is large — a full rewritten description plus per-photo ALT
-        # suggestions — so give generous headroom; 16k truncated the JSON.
-        max_tokens=32000,
+        # Thinking is off on purpose. The API rejects forcing a tool while
+        # thinking is on, so with thinking the model is free to end its turn
+        # without calling record_seo_analysis (and adaptive thinking also burns
+        # the token budget and the cost). With thinking off we force the tool —
+        # a guaranteed, cheaper, faster structured response.
+        thinking=False,
+        # No thinking means only the JSON output draws from this budget; the
+        # full description plus per-photo ALT suggestions fit comfortably in 16k.
+        max_tokens=16000,
     )

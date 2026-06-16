@@ -125,7 +125,7 @@ def test_build_user_message_includes_photo_alt_texts():
     assert "Photo 1 ALT: (no ALT text)" in msg
 
 
-def test_analyze_listing_seo_uses_primary_model_with_thinking():
+def test_analyze_listing_seo_forces_tool_without_thinking():
     expected = SeoAnalysisResult.model_validate(_valid_payload())
     usage = AIUsage(
         model="claude-fable-5",
@@ -144,6 +144,7 @@ def test_analyze_listing_seo_uses_primary_model_with_thinking():
     assert returned_usage is usage
     kwargs = ai.call_with_structured_output.call_args.kwargs
     assert kwargs["model"] == "claude-opus-4-8"
-    assert kwargs["thinking"] is True
+    # Thinking off so the gateway can force the tool (guaranteed structured output)
+    assert kwargs["thinking"] is False
     assert kwargs["tool_name"] == "record_seo_analysis"
     assert kwargs["output_model"] is SeoAnalysisResult
